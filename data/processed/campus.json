@@ -2,7 +2,7 @@
  "campus": "RVCE",
  "credit": "\u00a9 OpenStreetMap contributors (ODbL)",
  "osm_sha256": "04dfc10996581ef4ce9e27e3b1e660c4e2b8f8f47d31e4e9ec6fbc5a9ae36e76",
- "osm_file": "data/raw/osm_rvce.json",
+ "osm_file": "data\\raw\\osm_rvce.json",
  "origin": {
   "lat": 12.9232,
   "lon": 77.5006
