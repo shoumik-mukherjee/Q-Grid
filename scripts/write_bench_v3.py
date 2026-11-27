@@ -90,10 +90,29 @@ def daily() -> pd.DataFrame:
     return r
 
 
+STALE_PREFIX = "[not regenerated] "
+STALE_NOTE = "previous results, not regenerated with the new campus data"
+
+
+def carry_previous(r: pd.DataFrame) -> pd.DataFrame:
+    """Datasets absent from runs.csv keep their previous daily rows (results/bench_v3/daily_previous.csv), marked
+    regenerated=False. They are labelled as previous results everywhere they appear, never as current."""
+    r = r.assign(regenerated=True)
+    prev = OUT / "daily_previous.csv"
+    if prev.exists():
+        old = pd.read_csv(prev)
+        old = old[~old.dataset.isin(r.dataset.unique())].assign(regenerated=False)
+        if len(old):
+            r = pd.concat([r, old], ignore_index=True)
+    r.to_csv(OUT / "daily.csv", index=False)
+    return r
+
+
 def summary(r: pd.DataFrame, rate: float) -> pd.DataFrame:
     rows = []
     for (ds, m), g in r.groupby(["dataset", "method"]):
-        row = {"dataset": ds, "method": m, "n_days": len(g), "feasible_all": bool(g.feasible.all())}
+        row = {"dataset": ds, "method": m, "n_days": len(g), "feasible_all": bool(g.feasible.all()),
+               "regenerated": bool(g.regenerated.all()) if "regenerated" in g else True}
         for k, *_ in METRICS:
             if k == "npv10_rs_lakh":
                 continue
@@ -256,10 +275,11 @@ def story_headlines(s, labels, cfg, ds: str = "rvce") -> dict:
 def main():
     cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
     from qgrid.datasets import SPECS
-    r = daily()
+    r = carry_previous(daily())
     s = summary(r, float(cfg["economics"].get("discount_rate", 0.08)))
     w = wilcoxon(r)
-    labels = {k: SPECS[k].label for k in r.dataset.unique()}
+    stale = sorted(set(r.dataset[~r.regenerated.astype(bool)]))
+    labels = {k: (STALE_PREFIX + SPECS[k].label + f" — {STALE_NOTE}" if k in stale else SPECS[k].label) for k in r.dataset.unique()}
     order = [k for k in SPECS if k in labels]
     table = {ds: {m: {k: _stat(s, ds, m, k) for k, *_ in METRICS} for m in list(NAMES) + [REF[0]]} for ds in order}
     wil = {ds: {m: {k: (None if pd.isna(p) else float(p)) for k, p in zip(g.metric, g.p)} for m, g in gd.groupby("method")}
@@ -286,7 +306,11 @@ def main():
         if st["gap_pct"]:
             design.append({"key": m, "name": nm, "what_changed": what, **{k: (v or {}).get("mean") for k, v in st.items()},
                            "source": "results/bench_v3/summary.csv"})
-    hl = headline(s, w, labels)
+    hl = headline(s, w, {k: v for k, v in labels.items() if k not in stale})   # headline: regenerated datasets only
+    if stale:
+        hl["detail"] = (hl["detail"] + f" Not regenerated with the new campus data (previous results, not part of this headline): "
+                        + ", ".join(SPECS[k].label for k in stale) + ".").strip()
+    hl["stale_datasets"] = stale
     hl["story"] = story_headlines(s, labels, cfg)
     # shadow mode (Deploy -> Phase 0): per RVCE day, what staff did (status quo) vs what Q-Grid recommended, same data
     shadow = []
@@ -302,7 +326,8 @@ def main():
            "methods": [{"key": k, "name": v[0], "group": v[1], "without_coordinator": k not in ("central_mpc", "central_mpc_comms_fail")} for k, v in NAMES.items()],
            "reference": {"key": REF[0], "name": REF[1], "group": "Reference", "without_coordinator": False},
            "metrics": [{"key": k, "label": l, "group": g, "better": b, "unit": u, "digits": d} for k, l, g, b, u, d in METRICS],
-           "datasets": [{"key": k, "label": labels[k], "n_days": int(r[r.dataset == k].day.nunique())} for k in order],
+           "datasets": [{"key": k, "label": labels[k], "n_days": int(r[r.dataset == k].day.nunique()), "regenerated": k not in stale}
+                        for k in order],
            "table": table, "wilcoxon": wil, "comms_day": comms, "headline": hl, "design_choices": design, "shadow": shadow}
     rp = ROOT / "results" / "replay"
     (rp / "bench_v3.json").write_text(json.dumps(out, allow_nan=False, default=lambda o: None).replace("NaN", "null"), encoding="utf-8")
@@ -377,6 +402,11 @@ def write_docs(r, s, w, labels, order, hl, cfg):
           "single point of failure, which the communication-failure rows quantify.",
           "- Asset sizes on the BDG2 and CU-BEMS sites follow one rule, not real installations; they use RVCE's tariff and CO₂ "
           "factor for comparability (controlled variable); outages are synthetic."]
+    stale = [k for k in order if labels[k].startswith(STALE_PREFIX)]
+    if stale:
+        L.append("- **Not regenerated with the new campus data:** " + ", ".join(labels[k][len(STALE_PREFIX):].split(" — ")[0] for k in stale)
+                 + ". Their rows are the previous run (earlier stand-in tariff and CO₂ data), kept for reference only; they are "
+                 "excluded from the headline and from docs/consistency.md.")
     (ROOT / "docs" / "benchmark_v3.md").write_text("\n".join(L) + "\n", encoding="utf-8")
     # one-page scorecard (RVCE + per-dataset gap)
     S = ["# Q-Grid scorecard\n", f"**{hl['text']}** {hl['detail']}\n",

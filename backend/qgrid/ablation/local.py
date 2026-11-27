@@ -19,6 +19,10 @@ from ..model import DT, T, Campus
 INF = highspy.kHighsInf
 
 
+class NoIncumbent(RuntimeError):
+    """A local MILP found no feasible plan within its time budget, also with the diesel set fixed off."""
+
+
 @dataclass
 class LState:
     e: float
@@ -238,11 +242,42 @@ class LocalModel:
                 for t in integ]
         h.changeColsIntegrality(self.ncol, np.arange(self.ncol, dtype=np.int32), np.array(kind))
         is_lp = relax or fix_int is not None or not self.integ.any()
-        res = self._run(h, lb, ub, start, is_lp)
+        if is_lp:
+            res = self._run(h, lb, ub, start, is_lp)
+            res["dg_guard"] = None
+            return res
+        res = self._run(h, lb, ub, start, is_lp, raise_on_fail=False)
+        if res is None:                # no incumbent even with the 10x retry: try the plan with the diesel set off
+            res = self._dg_off_solve(h, lb, ub)
+            if res is None:            # caller (engine.run_day) falls back to the rule-based safe plan for the hour
+                raise NoIncumbent(f"local model {self.b.name}: no feasible plan within the time limit")
+            return res
         res["dg_guard"] = None
-        if not is_lp and "TimeLimit" in res["status"] and "on" in self.col:
+        if "TimeLimit" in res["status"] and "on" in self.col:
             res = self._dg_off_guard(h, lb, ub, res)
         return res
+
+    def _dg_off_bounds(self, lb, ub):
+        lb2, ub2 = lb.copy(), ub.copy()
+        on, pg, stc = self.col["on"], self.col["pg"], self.col["st"]
+        for k in range(self.H):
+            if lb[on[k]] > 0.5:                                  # minimum on-time of a running set: keep
+                continue
+            ub2[on[k]] = ub2[pg[k]] = ub2[stc[k]] = 0.0
+        return lb2, ub2
+
+    def _dg_off_solve(self, h, lb, ub) -> dict | None:
+        """Fallback when the MILP found no incumbent: the same problem with every diesel start fixed off (fewer binaries;
+        in an outage, critical load the battery cannot carry is shed at the value of lost load)."""
+        if "on" not in self.col:
+            return None
+        lb2, ub2 = self._dg_off_bounds(lb, ub)
+        h.clearSolver()
+        alt = self._run(h, lb2, ub2, None, False, raise_on_fail=False)
+        if alt is not None:
+            alt["dg_guard"] = "no incumbent: diesel-off plan used"
+            alt["status"] = "TimeLimit (no incumbent)"
+        return alt
 
     def _run(self, h, lb, ub, start, is_lp: bool, raise_on_fail: bool = True) -> dict | None:
         h.changeColsBounds(self.ncol, np.arange(self.ncol, dtype=np.int32), lb, ub)
@@ -277,11 +312,11 @@ class LocalModel:
         first solve's, so time-limited solves are still counted."""
         on, pg, stc = self.col["on"], self.col["pg"], self.col["st"]
         imp, sc = self.col["imp"], self.col["sc"]
-        lb2, ub2, x0 = lb.copy(), ub.copy(), res["x"].copy()
+        lb2, ub2 = self._dg_off_bounds(lb, ub)
+        x0 = res["x"].copy()
         for k in range(self.H):
-            if lb[on[k]] > 0.5:                                  # minimum on-time of a running set: keep
+            if lb[on[k]] > 0.5:
                 continue
-            ub2[on[k]] = ub2[pg[k]] = ub2[stc[k]] = 0.0
             d = x0[pg[k]]
             x0[on[k]] = x0[pg[k]] = x0[stc[k]] = 0.0
             x0[imp[k] if ub[imp[k]] > 0 else sc[k]] += d

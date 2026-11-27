@@ -90,3 +90,46 @@ def test_guard_respects_minimum_on_time_of_a_running_set(setup):
     m.time_limit = 1e-6
     res = m.solve(start=opt["x"])
     assert (m.get(res["x"], "on")[:forced] > 0.5).all()
+
+
+def test_no_incumbent_falls_back_to_diesel_off_plan(setup, monkeypatch):
+    """A MILP that ends with no incumbent (also after the 10x retry) is re-solved with the diesel set fixed off."""
+    c, yd = setup
+    i = next(k for k, b in enumerate(c.buildings) if b.dg)
+    m = _model(c, yd, i)
+    real = LocalModel._run
+    calls = []
+
+    def fake(self, h, lb, ub, start, is_lp, raise_on_fail=True):
+        calls.append(is_lp)
+        if len(calls) == 1:                                        # the full MILP: no incumbent
+            return None
+        return real(self, h, lb, ub, start, is_lp, raise_on_fail)
+
+    monkeypatch.setattr(LocalModel, "_run", fake)
+    res = m.solve()
+    assert res["dg_guard"] == "no incumbent: diesel-off plan used"
+    assert "TimeLimit" in res["status"]                            # counted as a time-limited solve
+    assert (m.get(res["x"], "on") < 0.5).all()
+
+
+def test_no_incumbent_at_all_runs_rule_based_hour(setup, monkeypatch):
+    """If neither the MILP nor the diesel-off MILP has a plan, the engine runs the rule-based safe plan for that hour
+    and records it, instead of failing the day."""
+    from qgrid.ablation import engine
+    from qgrid.ablation.local import NoIncumbent
+    c, yd = setup
+    real = LocalModel.solve
+    n = {"k": 0}
+
+    def flaky(self, *a, **kw):
+        if self.t0 == 36 and not kw.get("relax") and kw.get("fix_int") is None:
+            n["k"] += 1
+            raise NoIncumbent("forced for the test")
+        return real(self, *a, **kw)
+
+    monkeypatch.setattr(LocalModel, "solve", flaky)
+    sched, st = engine.run_day(c, yd, DAY, None, engine.ACfg(True, True, True, False))
+    assert n["k"] >= 1
+    assert st["rule_fallback_hours"] == 1 and st["fallback_slots"] == 4
+    assert (sched.dg_kw[:, 36:40] == 0).all()                      # grid up: the safe plan never runs diesel

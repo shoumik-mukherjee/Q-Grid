@@ -491,7 +491,7 @@ function step7(p: PanelProps, B: NonNullable<StoryData['bench']>, ds: string, pr
         return q !== undefined && q !== null && nocoord.every(m => (st(B, x.key, m, 'gap_pct')?.mean ?? Infinity) >= q)
       }).length
       return {
-        answer: <>Across {B.datasets.length} real campuses, Q-Grid is closest to the best possible plan among methods without a central controller on {best} of {B.datasets.length}.</>,
+        answer: <>Across {B.datasets.length} real campuses, Q-Grid is closest to the best possible plan among methods without a central controller on {best} of {B.datasets.length}.{B.datasets.some(x => x.regenerated === false) ? <> {B.datasets.filter(x => x.regenerated === false).length} of them show previous results, not regenerated with the new campus data.</> : null}</>,
         support: <p>Gap to the best possible plan (mean and 95 % interval) for Q-Grid and the strongest alternatives on each dataset.</p>,
         extra: <SmallMultiples b={B} />,
       }

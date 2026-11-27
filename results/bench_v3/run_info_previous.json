@@ -1,0 +1,32 @@
+{
+ "runtime_s": 31437.46649289131,
+ "workers": 8,
+ "days_per_dataset": 30,
+ "qgrid_combo": "1111",
+ "datasets": [
+  "rvce",
+  "bdg2_fox",
+  "bdg2_bull",
+  "bdg2_cockatoo",
+  "cubems"
+ ],
+ "methods": [
+  "status_quo",
+  "rule_based",
+  "ga",
+  "pso",
+  "per_building_mpc",
+  "central_mpc",
+  "central_mpc_comms_fail",
+  "qgrid",
+  "qgrid_comms_fail",
+  "optimum"
+ ],
+ "design_choices": [
+  "design_prototype_1h_binary",
+  "design_earlier_prototype",
+  "design_benders_exact",
+  "design_benders_qaoa",
+  "design_benders_qiea"
+ ]
+}

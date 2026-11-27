@@ -11,7 +11,10 @@ Fairness protocol
   - battery wear (config battery_wear) is priced in every optimiser's objective and in the scored objective; the
     earlier design rows (Benders, first prototype) predate it and do not price it
 
-  python scripts/run_bench_v3.py [--workers=8] [--days=30] [--qgrid=1111]   -> results/bench_v3/*.csv
+  python scripts/run_bench_v3.py [--workers=8] [--days=30] [--qgrid=1111] [--datasets=rvce,cubems] [--resume]
+      -> results/bench_v3/runs.csv, bounds.csv, run_info.json
+  --resume keeps the rows already in runs.csv / bounds.csv and runs only the missing (dataset, day, method) and
+  (dataset, day) bound tasks. Without --resume the script refuses to overwrite a non-empty runs.csv.
 """
 from __future__ import annotations
 
@@ -168,7 +171,8 @@ def run_one(ds: str, day: str, method: str, return_sched: bool = False) -> dict:
             "runtime_per_decision_s": st.get("plan_time_s", rt / decisions), "messages": st.get("messages", 0),
             "admm_converged_rate": st.get("admm_converged_rate", np.nan), "master_opt_share": st.get("master_opt_share", np.nan),
             "fallback_slots": st.get("fallback_slots", 0), "mip_timelimit": st.get("mip_timelimit", 0),
-            "dg_guard_used": st.get("dg_guard_used", 0), "works_without_coordinator": WITHOUT_COORDINATOR.get(method, True)}
+            "dg_guard_used": st.get("dg_guard_used", 0), "no_incumbent_dg_off": st.get("no_incumbent_dg_off", 0),
+            "rule_fallback_hours": st.get("rule_fallback_hours", 0), "works_without_coordinator": WITHOUT_COORDINATOR.get(method, True)}
 
 
 def run_bound(ds: str, day: str) -> dict:
@@ -184,10 +188,27 @@ def _init(qg):
     QGRID = qg
 
 
-def main(workers: int, ndays: int, qgrid: str):
+def _existing(path: Path) -> list[dict]:
+    if not path.exists() or path.stat().st_size < 3:
+        return []
+    try:
+        return pd.read_csv(path).to_dict("records")
+    except pd.errors.EmptyDataError:
+        return []
+
+
+def main(workers: int, ndays: int, qgrid: str, datasets: list[str], resume: bool):
     OUT.mkdir(parents=True, exist_ok=True)
+    old_rows, old_bounds = _existing(OUT / "runs.csv"), _existing(OUT / "bounds.csv")
+    if old_rows and not resume:
+        sys.exit(f"{OUT / 'runs.csv'} has {len(old_rows)} rows; pass --resume to keep them and run only the missing "
+                 "tasks, or move the file away first. Nothing was overwritten.")
+    if not resume:
+        old_bounds = []
+    done_runs = {(r["dataset"], str(r["day"]), r["method"]) for r in old_rows}
+    done_bounds = {(r["dataset"], str(r["day"])) for r in old_bounds}
     tasks = []
-    for ds in DATASETS:
+    for ds in datasets:
         c = ctx(ds)                                   # trains and caches each dataset's forecaster up front
         days = c["proc"]["meta"]["days"]["eval_days"][:ndays]
         for d in days:
@@ -196,8 +217,12 @@ def main(workers: int, ndays: int, qgrid: str):
                 tasks += [("run", ds, d, m) for m in DESIGN]
     cost = {"design_benders_qaoa": 9, "design_benders_qiea": 6, "design_benders_exact": 4, "design_earlier_prototype": 3,
             "qgrid": 2, "qgrid_comms_fail": 2, "central_mpc": 2, "central_mpc_comms_fail": 2}
+    n_all = len(tasks)
+    tasks = [t for t in tasks if not ((t[0] == "run" and (t[1], t[2], t[3]) in done_runs) or
+                                      (t[0] == "bound" and (t[1], t[2]) in done_bounds))]
+    print(f"{len(tasks)} of {n_all} tasks to run ({len(old_rows)} runs and {len(old_bounds)} bounds kept)", flush=True)
     tasks.sort(key=lambda t: -cost.get(t[3], 1))
-    rows, bounds = [], []
+    rows, bounds = list(old_rows), list(old_bounds)
     t_all = time.time()
     with ProcessPoolExecutor(max_workers=workers, initializer=_init, initargs=(qgrid,)) as ex:
         futs = {(ex.submit(run_one, ds, d, m) if k == "run" else ex.submit(run_bound, ds, d)): (k, ds, d, m)
@@ -212,13 +237,14 @@ def main(workers: int, ndays: int, qgrid: str):
             (rows if k == "run" else bounds).append(r)
             if k == "run":
                 print(f"[{n}/{len(futs)}] {ds:13s} {d} {m:26s} {r['objective_rs']:14,.0f} {r['runtime_s']:6.1f}s", flush=True)
-            if n % 50 == 0:
+            if n % 10 == 0:                           # checkpoint (kept rows + new rows)
                 pd.DataFrame(rows).to_csv(OUT / "runs.csv", index=False)
                 pd.DataFrame(bounds).to_csv(OUT / "bounds.csv", index=False)
     pd.DataFrame(rows).to_csv(OUT / "runs.csv", index=False)
     pd.DataFrame(bounds).to_csv(OUT / "bounds.csv", index=False)
     json.dump({"runtime_s": time.time() - t_all, "workers": workers, "days_per_dataset": ndays, "qgrid_combo": qgrid,
-               "datasets": DATASETS, "methods": MAIN, "design_choices": DESIGN}, open(OUT / "run_info.json", "w", encoding="utf-8"), indent=1)
+               "resumed": resume, "datasets_run": datasets,
+               "datasets": sorted({r["dataset"] for r in rows}, key=DATASETS.index), "methods": MAIN, "design_choices": DESIGN}, open(OUT / "run_info.json", "w", encoding="utf-8"), indent=1)
     print(f"done in {time.time() - t_all:.0f} s", flush=True)
 
 
@@ -227,5 +253,10 @@ if __name__ == "__main__":
     w = _workers(next((int(a.split("=")[1]) for a in sys.argv if a.startswith("--workers=")), None))
     nd = next((int(a.split("=")[1]) for a in sys.argv if a.startswith("--days=")), 30)
     qg = next((a.split("=")[1] for a in sys.argv if a.startswith("--qgrid=")), QGRID)
+    dsa = next((a.split("=", 1)[1] for a in sys.argv if a.startswith("--datasets=")), None)
+    dss = DATASETS if not dsa else [d.strip() for d in dsa.split(",") if d.strip()]
+    bad = [d for d in dss if d not in DATASETS]
+    if bad:
+        sys.exit(f"unknown dataset(s) {bad}; choose from {DATASETS}")
     QGRID = qg
-    main(w, nd, qg)
+    main(w, nd, qg, dss, "--resume" in sys.argv)

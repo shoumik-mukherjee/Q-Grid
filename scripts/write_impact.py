@@ -96,7 +96,10 @@ def main():
         row = s[(s.dataset == ds) & (s.method == "qgrid")]
         if len(row):
             row = row.iloc[0]
-            ds_rows.append({"dataset": ds, "label": SPECS[ds].label, "gap_pct": float(row.gap_pct__mean),
+            cur = bool(row.get("regenerated", True)) if not pd.isna(row.get("regenerated", True)) else True
+            ds_rows.append({"dataset": ds, "regenerated": cur,
+                            "label": SPECS[ds].label if cur else "[not regenerated] " + SPECS[ds].label + " — previous results, not regenerated with the new campus data",
+                            "gap_pct": float(row.gap_pct__mean),
                             "saving_pct": float(row.saving_pct__mean), "runtime_per_decision_s": float(row.runtime_per_decision_s__mean),
                             "messages_per_decision": float(row.messages_per_decision__mean)})
     # ---- design change under test: wear priced in the objective (scripts/run_wear_variant.py), same days and draws
@@ -194,7 +197,7 @@ def main():
     for st in out["scale"]:
         L.append(f"- **{st['stage']}**: {st['what']} ({st['evidence']}).")
         for r_ in st.get("datasets", []):
-            L.append(f"  - {r_['label']}: gap to the best plan {r_['gap_pct']:.1f} %, bill change {r_['saving_pct']:+.1f} % (RVCE KERC tariff for comparability), "
+            L.append(f"  - {r_['label']}: gap to the best plan {r_['gap_pct']:.1f} %, bill change {r_['saving_pct']:+.1f} % {'(RVCE KERC tariff for comparability)' if r_.get('regenerated', True) else '(previous run, earlier stand-in data)'}, "
                      f"{r_['runtime_per_decision_s']:.1f} s per decision")
     (ROOT / "docs" / "impact.md").write_text("\n".join(x for x in L if x is not None) + "\n", encoding="utf-8")
     print(json.dumps(central, indent=1))

@@ -23,7 +23,7 @@ import scipy.sparse as sp
 from ..costtogo import CostToGo
 from ..model import DT, T, Campus, Schedule
 from ..safety import clamp_battery, clamp_flow, flex_decision, pump_decision
-from .local import LocalModel, LState
+from .local import LocalModel, LState, NoIncumbent
 
 
 @dataclass
@@ -114,6 +114,14 @@ def _lp_admm(campus, models, ints, cfg: ACfg, z0, u0, trace: list | None = None)
     return z, u, it, conv
 
 
+def _count(st: dict, s: dict) -> None:
+    """Per-solve counters for runs.csv: time-limited MILPs, diesel-off guard swaps, no-incumbent diesel-off fallbacks."""
+    g = s.get("dg_guard") or ""
+    st["mip_timelimit"] += "TimeLimit" in s["status"]
+    st["dg_guard_used"] += "kept (cheaper)" in g
+    st["no_incumbent_dg_off"] = st.get("no_incumbent_dg_off", 0) + ("no incumbent" in g)
+
+
 def plan_hour(campus: Campus, models: list[LocalModel], cfg: ACfg, warm: dict, hook=None, trace: dict | None = None) -> tuple[list, dict]:
     """Coordinate the buildings for one decision; returns each building's final solution x and stats."""
     n, H, F = len(models), models[0].H, campus.step_kw
@@ -142,7 +150,7 @@ def plan_hour(campus: Campus, models: list[LocalModel], cfg: ACfg, warm: dict, h
                 for k, (l, _) in enumerate(m.inc):
                     c[m.fcols[k]] += rho * (u[(i, l)] - z[l])
                     c[m.col[f"q{k}"]] += rho / 2
-                s = m.solve(c); st["mip_solves"] += 1; st["mip_nodes"] += s["nodes"]; st["mip_timelimit"] += "TimeLimit" in s["status"]; st["dg_guard_used"] += bool(s.get("dg_guard") and "kept (cheaper)" in s["dg_guard"])
+                s = m.solve(c); st["mip_solves"] += 1; st["mip_nodes"] += s["nodes"]; _count(st, s)
                 fx.append(m.flows(s["x"]))
             gap = 0.0
             for l, (a, c_) in enumerate(campus.lines):
@@ -180,7 +188,7 @@ def plan_hour(campus: Campus, models: list[LocalModel], cfg: ACfg, warm: dict, h
                 c[m.fcols[k]] += lam[(i, l)]
             if hook is not None and r == 0:
                 hook(i, m, c)                              # quantum-placement experiment taps the commitment MILP
-            s = m.solve(c); st["mip_solves"] += 1; st["mip_nodes"] += s["nodes"]; st["mip_timelimit"] += "TimeLimit" in s["status"]; st["dg_guard_used"] += bool(s.get("dg_guard") and "kept (cheaper)" in s["dg_guard"])
+            s = m.solve(c); st["mip_solves"] += 1; st["mip_nodes"] += s["nodes"]; _count(st, s)
             ints.append(s["x"])
         tr = [] if trace is not None else None
         z, u, it, conv = _lp_admm(campus, models, ints, cfg, z, u, trace=tr)
@@ -288,8 +296,16 @@ def run_day(campus: Campus, yd, day: str, outage, cfg: ACfg, forecaster=None, ho
             stats["plan_time_s"].append(time.perf_counter() - tp)
             continue
         warm["_isolated"] = failing                    # peer links down: Q-Grid buildings keep optimising alone
-        xs, st = plan_hour(campus, models, cfg, warm, hook=(lambda i, m, c, _t=t0: hook(_t, i, m, c)) if hook else None,
-                           trace=trace if (trace is not None and t0 == trace_slot) else None)
+        try:
+            xs, st = plan_hour(campus, models, cfg, warm, hook=(lambda i, m, c, _t=t0: hook(_t, i, m, c)) if hook else None,
+                               trace=trace if (trace is not None and t0 == trace_slot) else None)
+        except NoIncumbent:                            # a local MILP had no feasible plan in time: safe rule-based hour
+            stats["rule_fallback_hours"] = stats.get("rule_fallback_hours", 0) + 1
+            stats["fallback_slots"] = stats.get("fallback_slots", 0) + cfg.replan
+            _rule_fallback(campus, yd, d0, t0, cfg.replan, outage, sched, states)
+            stats["plan_time_s"].append(time.perf_counter() - tp)
+            continue
+        stats["no_incumbent_dg_off"] = stats.get("no_incumbent_dg_off", 0) + st.get("no_incumbent_dg_off", 0)
         stats["rounds"].append(st["rounds"]); stats["converged"].append(st["converged"])
         stats["mip_solves"] += st["mip_solves"]; stats["mip_nodes"] += st["mip_nodes"]; stats["mip_timelimit"] += st["mip_timelimit"]
         stats["dg_guard_used"] += st.get("dg_guard_used", 0)
@@ -345,5 +361,6 @@ def run_day(campus: Campus, yd, day: str, outage, cfg: ACfg, forecaster=None, ho
     stats = {"admm_rounds_mean": float(np.mean(stats["rounds"])), "admm_converged_rate": float(np.mean(stats["converged"])),
              "mip_solves": stats["mip_solves"], "mip_nodes": stats["mip_nodes"], "mip_timelimit": stats["mip_timelimit"], "dg_guard_used": stats["dg_guard_used"],
              "plan_time_s": float(np.mean(stats["plan_time_s"])), "runtime_s": float(np.sum(stats["plan_time_s"])),
-             "messages": stats.get("messages", 0), "fallback_slots": stats.get("fallback_slots", 0)}
+             "messages": stats.get("messages", 0), "fallback_slots": stats.get("fallback_slots", 0),
+             "no_incumbent_dg_off": stats.get("no_incumbent_dg_off", 0), "rule_fallback_hours": stats.get("rule_fallback_hours", 0)}
     return sched, stats

@@ -113,7 +113,7 @@ export type Bench = {
   methods: BenchMethod[]
   reference: BenchMethod
   metrics: BenchMetric[]
-  datasets: { key: string; label: string; n_days: number }[]
+  datasets: { key: string; label: string; n_days: number; regenerated?: boolean }[]
   table: Record<string, Record<string, Record<string, BenchStat>>>          // dataset -> method -> metric
   wilcoxon: Record<string, Record<string, Record<string, number | null>>>   // dataset -> method -> metric -> p vs Q-Grid
   comms_day: { dataset: string; day: string; window: [number, number]; t: string[]; series: Record<string, number[]>; totals: Record<string, number> } | null
