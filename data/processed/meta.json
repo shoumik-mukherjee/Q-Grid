@@ -121,58 +121,58 @@
   "loads": {
     "zones": {
       "academic": {
-        "annual_kwh": 5758178,
-        "peak_kw": 1066.1,
-        "floor_m2": 95871,
+        "annual_kwh": 2409997,
+        "peak_kw": 511.3,
+        "floor_m2": 40068,
         "epi_kwh_m2_yr": 60,
         "profile": "bdg2:Education/College Classroom|Academic|Classroom (130 buildings)"
       },
       "heavy_labs": {
-        "annual_kwh": 2419282,
-        "peak_kw": 375.2,
-        "floor_m2": 26664,
+        "annual_kwh": 1421164,
+        "peak_kw": 242.0,
+        "floor_m2": 15574,
         "epi_kwh_m2_yr": 90,
         "profile": "bdg2:Education/College Laboratory|Research (124 buildings)"
       },
       "hostels": {
-        "annual_kwh": 451349,
-        "peak_kw": 70.8,
-        "floor_m2": 10030,
+        "annual_kwh": 1739660,
+        "peak_kw": 272.7,
+        "floor_m2": 38659,
         "epi_kwh_m2_yr": 45,
         "profile": "bdg2:Lodging/residential/Dormitory|Residence Hall (86 buildings)"
       },
       "library": {
-        "annual_kwh": 780477,
-        "peak_kw": 146.4,
-        "floor_m2": 11150,
+        "annual_kwh": 455855,
+        "peak_kw": 85.5,
+        "floor_m2": 6512,
         "epi_kwh_m2_yr": 70,
         "profile": "bdg2:Public services/Library (48 buildings)"
       },
       "canteen": {
-        "annual_kwh": 773750,
-        "peak_kw": 146.9,
-        "floor_m2": 5158,
+        "annual_kwh": 451926,
+        "peak_kw": 85.8,
+        "floor_m2": 3013,
         "epi_kwh_m2_yr": 150,
         "profile": "bdg2:Education/Student Union (11 buildings)"
       },
       "admin": {
-        "annual_kwh": 452731,
-        "peak_kw": 80.1,
-        "floor_m2": 5659,
+        "annual_kwh": 111060,
+        "peak_kw": 19.7,
+        "floor_m2": 1388,
         "epi_kwh_m2_yr": 80,
         "profile": "bdg2:Office/Office (235 buildings)"
       },
       "server_room": {
-        "annual_kwh": 1547376,
-        "peak_kw": 176.6,
-        "floor_m2": 1289,
+        "annual_kwh": 903779,
+        "peak_kw": 103.2,
+        "floor_m2": 753,
         "epi_kwh_m2_yr": 1200,
         "profile": "flat"
       },
       "health_centre": {
-        "annual_kwh": 105975,
-        "peak_kw": 16.8,
-        "floor_m2": 706,
+        "annual_kwh": 61897,
+        "peak_kw": 9.8,
+        "floor_m2": 413,
         "epi_kwh_m2_yr": 150,
         "profile": "bdg2:Healthcare/Hospital|Patient Care (11 buildings)"
       },
@@ -202,6 +202,9 @@
     "cea": "REAL",
     "calendar": "PENDING",
     "campus_loads": "PENDING RVCE DATA",
+    "floor_areas": "SOURCED (RVCE NAAC SSR 2024, scaled)",
+    "pv_existing": "500 kWp SOURCED, VERIFICATION PENDING (PDF not yet in data/raw/rvce/)",
+    "batteries_tielines_ev": "PROPOSED (Q-Grid design, not on campus today)",
     "lab_schedule": "TEMPLATE"
   }
 }

@@ -528,6 +528,12 @@ def build_all(cfg: dict | None = None) -> dict:
                             "iex": price_status["B"]["status"], "tariff_A": price_status["A"]["status"],
                             "cea": co2["status"], "calendar": cfg["calendar"]["status"],
                             "campus_loads": "PENDING RVCE DATA" if not (RAW / "rvce_bills.csv").exists() else "SCALED TO BILLS",
+                            **({"floor_areas": "SOURCED (RVCE NAAC SSR 2024, scaled)"} if layout.get("area_targets") else {}),
+                            **({"pv_existing": f"{layout['pv']['total_kwp']:.0f} kWp {layout['pv']['status']}"
+                                if layout["pv"]["scenario"] == "existing" else
+                                f"PROPOSED scenario {layout['pv']['total_kwp']:.0f} kWp (existing {layout['pv']['existing_kwp']:.0f})"}
+                               if layout.get("pv", {}).get("existing_kwp") is not None else {}),
+                            "batteries_tielines_ev": "PROPOSED (Q-Grid design, not on campus today)",
                             "lab_schedule": "TEMPLATE" if "TEMPLATE" in (RAW / "lab_schedule.csv").read_text() else "REAL"}}
     (PROC / "meta.json").write_text(json.dumps(meta, indent=2, default=str))
     return meta

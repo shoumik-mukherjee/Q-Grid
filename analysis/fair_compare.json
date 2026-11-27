@@ -1,0 +1,455 @@
+{
+ "headline outage_fest": {
+  "day": "2023-06-15",
+  "outage": [
+   "18:00",
+   "21:00"
+  ],
+  "wear_rate_rs_per_kwh": 4.166666666666667,
+  "price_min_max": [
+   7.5,
+   9.5
+  ],
+  "export_price": 3.74,
+  "feasible": [
+   true,
+   true
+  ],
+  "status_quo": {
+   "energy_cost_rs": 143761.71586313954,
+   "fuel_cost_rs": 40953.67835201112,
+   "terminal_adj_rs": 2462.5000000000036,
+   "demand_charge_rs": 14428.27239504859,
+   "wear_rs": 1199.3749999999998,
+   "voll_rs": 445418.4284351772,
+   "total_rs": 648223.9700453765,
+   "check_objective_incl_demand_rs": 648223.9700453765,
+   "import_kwh": 17540.18929122852,
+   "export_kwh": 0.0,
+   "peak_kva": 1236.7090624327363,
+   "critical_downtime_h": 3.0,
+   "dg_litres": 455.0408705779013
+  },
+  "qgrid": {
+   "energy_cost_rs": 148635.11555472674,
+   "fuel_cost_rs": 50119.83752742475,
+   "terminal_adj_rs": 4275.000000000005,
+   "demand_charge_rs": 18435.494953739926,
+   "wear_rs": 7207.867170886853,
+   "voll_rs": 35126.00102453521,
+   "total_rs": 263799.31623131345,
+   "check_objective_incl_demand_rs": 263799.3162313135,
+   "import_kwh": 18220.748093337766,
+   "export_kwh": 0.0,
+   "peak_kva": 1580.1852817491365,
+   "critical_downtime_h": 1.0,
+   "dg_litres": 556.8870836380528
+  },
+  "steps": [
+   {
+    "step": "load shifting (flexible loads)",
+    "energy_cost_rs": 402.5,
+    "fuel_cost_rs": 0.0,
+    "terminal_adj_rs": 0.0,
+    "demand_charge_rs": -184.21052631579187,
+    "wear_rs": 0.0,
+    "voll_rs": 0.0,
+    "total_rs": 218.28947368415538,
+    "peak_kva": -15.789473684210634,
+    "import_kwh": 50.0
+   },
+   {
+    "step": "pump scheduling (water tank)",
+    "energy_cost_rs": -720.0,
+    "fuel_cost_rs": 0.0,
+    "terminal_adj_rs": 687.5,
+    "demand_charge_rs": -368.4210526315783,
+    "wear_rs": 0.0,
+    "voll_rs": -900.0,
+    "total_rs": -1300.9210526314564,
+    "peak_kva": -31.57894736842104,
+    "import_kwh": -60.0
+   },
+   {
+    "step": "sharing between buildings (tie-lines)",
+    "energy_cost_rs": 0.0,
+    "fuel_cost_rs": 0.0,
+    "terminal_adj_rs": 0.0,
+    "demand_charge_rs": 1.8189894035458565e-12,
+    "wear_rs": 0.0,
+    "voll_rs": 84561.45843532204,
+    "total_rs": 84561.45843532193,
+    "peak_kva": 2.2737367544323206e-13,
+    "import_kwh": 0.0
+   },
+   {
+    "step": "batteries + diesel dispatch",
+    "energy_cost_rs": 5190.899691587198,
+    "fuel_cost_rs": 9166.159175413632,
+    "terminal_adj_rs": 1125.000000000001,
+    "demand_charge_rs": 4559.854137638704,
+    "wear_rs": 6008.492170886853,
+    "voll_rs": -493953.885845964,
+    "total_rs": -467903.4806704376,
+    "peak_kva": 390.8446403690316,
+    "import_kwh": 690.5588021092481
+   }
+  ],
+  "battery": {
+   "charge_kwh": 690.5588021092481,
+   "discharge_kwh": 1039.3293189035965,
+   "charge_from_own_solar_surplus_kwh": 0.0,
+   "charge_from_grid_kwh": 690.5588021092481,
+   "discharge_during_outage_kwh": 1039.3293189035965,
+   "avg_import_price_when_charging": 7.516955363876442,
+   "avg_import_price_when_discharging": 9.5,
+   "throughput_kwh": 1729.8881210128447,
+   "wear_rs": 7207.867170886853,
+   "status_quo_throughput_kwh": 287.8499999999999
+  },
+  "flex_moves": [
+   [
+    "academic",
+    "ev_charging",
+    36,
+    40
+   ],
+   [
+    "academic",
+    "auditorium_precool",
+    64,
+    48
+   ],
+   [
+    "heavy_labs",
+    "heavy_lab_machines",
+    40,
+    56
+   ],
+   [
+    "hostels",
+    "water_heaters",
+    16,
+    8
+   ],
+   [
+    "hostels",
+    "laundry",
+    72,
+    47
+   ],
+   [
+    "library",
+    "hvac_precool",
+    60,
+    44
+   ],
+   [
+    "canteen",
+    "cold_storage_cycle",
+    64,
+    0
+   ]
+  ]
+ },
+ "teaching Dec-Jun (ToD)": {
+  "day": "2023-04-26",
+  "outage": null,
+  "wear_rate_rs_per_kwh": 4.166666666666667,
+  "price_min_max": [
+   7.5,
+   9.5
+  ],
+  "export_price": 3.74,
+  "feasible": [
+   true,
+   true
+  ],
+  "status_quo": {
+   "energy_cost_rs": 167057.4189061552,
+   "fuel_cost_rs": 0.0,
+   "terminal_adj_rs": 124.99999999999713,
+   "demand_charge_rs": 12557.147495658184,
+   "wear_rs": 0.0,
+   "voll_rs": 0.0,
+   "total_rs": 179739.56640181338,
+   "check_objective_incl_demand_rs": 179739.56640181338,
+   "import_kwh": 19952.77365538787,
+   "export_kwh": 0.0,
+   "peak_kva": 1076.326928199273,
+   "critical_downtime_h": 0.0,
+   "dg_litres": 0.0
+  },
+  "qgrid": {
+   "energy_cost_rs": 166272.41890615516,
+   "fuel_cost_rs": 0.0,
+   "terminal_adj_rs": 624.9999999999955,
+   "demand_charge_rs": 12026.62902604548,
+   "wear_rs": 0.0,
+   "voll_rs": 0.0,
+   "total_rs": 178924.04793220063,
+   "check_objective_incl_demand_rs": 178924.04793220063,
+   "import_kwh": 19892.77365538787,
+   "export_kwh": 0.0,
+   "peak_kva": 1030.8539165181842,
+   "critical_downtime_h": 0.0,
+   "dg_litres": 0.0
+  },
+  "steps": [
+   {
+    "step": "load shifting (flexible loads)",
+    "energy_cost_rs": -72.5,
+    "fuel_cost_rs": 0.0,
+    "terminal_adj_rs": 0.0,
+    "demand_charge_rs": -162.0974169811234,
+    "wear_rs": 0.0,
+    "voll_rs": 0.0,
+    "total_rs": -234.5974169811234,
+    "peak_kva": -13.894064312667751,
+    "import_kwh": 0.0
+   },
+   {
+    "step": "pump scheduling (water tank)",
+    "energy_cost_rs": -712.5,
+    "fuel_cost_rs": 0.0,
+    "terminal_adj_rs": 499.9999999999983,
+    "demand_charge_rs": -368.4210526315801,
+    "wear_rs": 0.0,
+    "voll_rs": 0.0,
+    "total_rs": -580.9210526316019,
+    "peak_kva": -31.57894736842104,
+    "import_kwh": -60.0
+   },
+   {
+    "step": "sharing between buildings (tie-lines)",
+    "energy_cost_rs": -2.9103830456733704e-11,
+    "fuel_cost_rs": 0.0,
+    "terminal_adj_rs": 0.0,
+    "demand_charge_rs": 0.0,
+    "wear_rs": 0.0,
+    "voll_rs": 0.0,
+    "total_rs": -2.9103830456733704e-11,
+    "peak_kva": 0.0,
+    "import_kwh": 0.0
+   },
+   {
+    "step": "batteries + diesel dispatch",
+    "energy_cost_rs": 0.0,
+    "fuel_cost_rs": 0.0,
+    "terminal_adj_rs": 0.0,
+    "demand_charge_rs": 0.0,
+    "wear_rs": 0.0,
+    "voll_rs": 0.0,
+    "total_rs": 0.0,
+    "peak_kva": 0.0,
+    "import_kwh": 0.0
+   }
+  ],
+  "battery": {
+   "charge_kwh": 0.0,
+   "discharge_kwh": 0.0,
+   "charge_from_own_solar_surplus_kwh": 0.0,
+   "charge_from_grid_kwh": 0.0,
+   "discharge_during_outage_kwh": 0.0,
+   "avg_import_price_when_charging": 0.0,
+   "avg_import_price_when_discharging": 0.0,
+   "throughput_kwh": 0.0,
+   "wear_rs": 0.0,
+   "status_quo_throughput_kwh": 0.0
+  },
+  "flex_moves": [
+   [
+    "academic",
+    "ev_charging",
+    36,
+    52
+   ],
+   [
+    "academic",
+    "auditorium_precool",
+    64,
+    60
+   ],
+   [
+    "heavy_labs",
+    "heavy_lab_machines",
+    40,
+    36
+   ],
+   [
+    "hostels",
+    "water_heaters",
+    16,
+    7
+   ],
+   [
+    "hostels",
+    "laundry",
+    72,
+    32
+   ],
+   [
+    "library",
+    "hvac_precool",
+    60,
+    32
+   ],
+   [
+    "canteen",
+    "cold_storage_cycle",
+    64,
+    0
+   ]
+  ]
+ },
+ "teaching Jul-Nov (no ToD)": {
+  "day": "2023-09-13",
+  "outage": null,
+  "wear_rate_rs_per_kwh": 4.166666666666667,
+  "price_min_max": [
+   8.5,
+   8.5
+  ],
+  "export_price": 3.74,
+  "feasible": [
+   true,
+   true
+  ],
+  "status_quo": {
+   "energy_cost_rs": 178542.22209766734,
+   "fuel_cost_rs": 0.0,
+   "terminal_adj_rs": 127.49999999999706,
+   "demand_charge_rs": 13234.944817355303,
+   "wear_rs": 0.0,
+   "voll_rs": 0.0,
+   "total_rs": 191904.66691502265,
+   "check_objective_incl_demand_rs": 191904.66691502265,
+   "import_kwh": 21004.967305607926,
+   "export_kwh": 0.0,
+   "peak_kva": 1134.4238414875974,
+   "critical_downtime_h": 0.0,
+   "dg_litres": 0.0
+  },
+  "qgrid": {
+   "energy_cost_rs": 177649.72209766737,
+   "fuel_cost_rs": 0.0,
+   "terminal_adj_rs": 1020.0000000000002,
+   "demand_charge_rs": 12620.92195430187,
+   "wear_rs": 0.0,
+   "voll_rs": 0.0,
+   "total_rs": 191290.64405196923,
+   "check_objective_incl_demand_rs": 191290.64405196923,
+   "import_kwh": 20899.967305607926,
+   "export_kwh": 0.0,
+   "peak_kva": 1081.7933103687317,
+   "critical_downtime_h": 0.0,
+   "dg_litres": 0.0
+  },
+  "steps": [
+   {
+    "step": "load shifting (flexible loads)",
+    "energy_cost_rs": 0.0,
+    "fuel_cost_rs": 0.0,
+    "terminal_adj_rs": 0.0,
+    "demand_charge_rs": -727.3272549565281,
+    "wear_rs": 0.0,
+    "voll_rs": 0.0,
+    "total_rs": -727.3272549565299,
+    "peak_kva": -62.34233613913102,
+    "import_kwh": 0.0
+   },
+   {
+    "step": "pump scheduling (water tank)",
+    "energy_cost_rs": -892.5,
+    "fuel_cost_rs": 0.0,
+    "terminal_adj_rs": 892.5000000000032,
+    "demand_charge_rs": 113.30439190308607,
+    "wear_rs": 0.0,
+    "voll_rs": 0.0,
+    "total_rs": 113.30439190307516,
+    "peak_kva": 9.711805020264592,
+    "import_kwh": -105.0
+   },
+   {
+    "step": "sharing between buildings (tie-lines)",
+    "energy_cost_rs": 2.9103830456733704e-11,
+    "fuel_cost_rs": 0.0,
+    "terminal_adj_rs": 0.0,
+    "demand_charge_rs": 9.094947017729282e-12,
+    "wear_rs": 0.0,
+    "voll_rs": 0.0,
+    "total_rs": 2.9103830456733704e-11,
+    "peak_kva": 6.821210263296962e-13,
+    "import_kwh": 0.0
+   },
+   {
+    "step": "batteries + diesel dispatch",
+    "energy_cost_rs": 0.0,
+    "fuel_cost_rs": 0.0,
+    "terminal_adj_rs": 0.0,
+    "demand_charge_rs": 0.0,
+    "wear_rs": 0.0,
+    "voll_rs": 0.0,
+    "total_rs": 0.0,
+    "peak_kva": 0.0,
+    "import_kwh": 0.0
+   }
+  ],
+  "battery": {
+   "charge_kwh": 0.0,
+   "discharge_kwh": 0.0,
+   "charge_from_own_solar_surplus_kwh": 0.0,
+   "charge_from_grid_kwh": 0.0,
+   "discharge_during_outage_kwh": 0.0,
+   "avg_import_price_when_charging": 0.0,
+   "avg_import_price_when_discharging": 0.0,
+   "throughput_kwh": 0.0,
+   "wear_rs": 0.0,
+   "status_quo_throughput_kwh": 0.0
+  },
+  "flex_moves": [
+   [
+    "academic",
+    "ev_charging",
+    36,
+    32
+   ],
+   [
+    "academic",
+    "auditorium_precool",
+    64,
+    44
+   ],
+   [
+    "heavy_labs",
+    "heavy_lab_machines",
+    40,
+    36
+   ],
+   [
+    "hostels",
+    "water_heaters",
+    16,
+    4
+   ],
+   [
+    "hostels",
+    "laundry",
+    72,
+    32
+   ],
+   [
+    "library",
+    "hvac_precool",
+    60,
+    32
+   ],
+   [
+    "canteen",
+    "cold_storage_cycle",
+    64,
+    0
+   ]
+  ]
+ }
+}

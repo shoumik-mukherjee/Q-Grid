@@ -196,6 +196,30 @@ Synthetic inputs appear only in unit tests (`backend/tests/`), labelled SYNTHETI
   roof × 0.18 kWp/m² (ASSUMPTION); tie-lines = minimum spanning tree on zone centroids + 2 shortest extra links,
   degree ≤ 3. The pump house is not mapped in OSM; its location/size are ASSUMPTIONS.
 
+## RVCE campus assets and floor areas (config.yaml `campus.pv`, `campus.area_targets`, diesel) — SOURCED / PROPOSED
+Source: RVCE NAAC SSR 2024, `data/raw/rvce/Final-submitted-SSR_28-June-2024_latest.pdf` (PDF page = printed page).
+- **Campus extent:** SSR p12 "Main campus area ... Campus Area in Acres 16.85 ... Built up Area in sq.mts. 67721". The OSM
+  outline (way 55685638) is 49.6 acres, the whole RV Vidyaniketan campus. RV University buildings are excluded by their OSM
+  names ("RVU A Block", "RVU Block", "RVU C Block", "RVU Admin Block"); unnamed buildings cannot be attributed from OSM.
+- **Floor areas:** hostels = 38,659.11 m² (p78, "three Boys Hostels(1185 rooms, 38659.11 sq. m, 1450 capacity)"; girls'
+  hostels have no area in the SSR and are not added). The other OSM zones are scaled together (×0.584) to 67,721 m²
+  (INTERPRETATION, ASSUMPTION: the p12 figure excludes the boys' hostels; including them would leave the other buildings
+  29,062 m², below their mapped roof area). Zones scaled down keep their OSM roofs; the hostel roof grows by the same factor
+  as its floor area (unmapped hostel blocks, ASSUMPTION). Total 106,440 m² (was 156,588 m² from OSM × assumed levels).
+- **Existing rooftop PV: 500 kWp, SOURCED, VERIFICATION PENDING.** RVCE "21. Electrical Grid Power Supply Connection"
+  (`https://rvce.edu.in/sites/default/files/21.%20Electrical%20Grid%20Power%20Supply%20Connection.pdf`): 1,564 modules ×
+  320 Wp on 21 rooftops = 500.48 kWp; inverters 6 × 50 + 6 × 30 + 1 × 20 kW = 500 kW, as reported by the team. The PDF and the
+  NAAC building list (`https://naac.rvce.edu.in/sites/default/files/2024-05/Cr_7.1.2_File_4_Solar_Power_Facility_in_various_departments_Geotagged_Photos.pdf`)
+  refused scripted downloads on 2026-11-27 and are not yet in `data/raw/rvce/`; split across zones by roof area
+  (ASSUMPTION) until the building list is available. The earlier roof-potential PV (≈ 4,000 kWp: 45 % of roof × 0.18 kWp/m²)
+  is kept only as the PROPOSED scenario (`campus.pv.scenario: proposed`), never the baseline.
+- **Diesel:** SSR p69 "UPS along with two generators of capacity 980 KVA are available. It is planned to add three more
+  generators with capacity 750 KVA each". Read as 980 kVA in total for the two existing sets (INTERPRETATION), 490 kVA each ×
+  0.8 pf (ASSUMPTION) = 392 kW, placed at hostels and admin (ASSUMPTION). The planned 3 × 750 kVA are excluded.
+- **PROPOSED (Q-Grid design, not on campus today):** batteries (1,460 kWh; no battery documented — the server-room 120 kWh is
+  the documented UPS, capacity ASSUMPTION), inter-building tie-line cables, the 44 kW EV-charging load (no chargers
+  documented; SSR p108 says staff and students use EVs).
+
 ## Campus loads — PENDING RVCE DATA
 - Annual kWh per zone = floor area × energy-use intensity (kWh/m²/yr, ASSUMPTION per zone in `config.yaml`).
 - Shapes: timetable templates by building type and day type (`configs/profiles.yaml`, ASSUMPTION); hostels use the

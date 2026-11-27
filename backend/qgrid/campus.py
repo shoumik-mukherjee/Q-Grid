@@ -170,16 +170,75 @@ def build_layout(cfg: dict) -> dict:
             zz["cx"], zz["cy"] = spec["virtual"]["x_m"], spec["virtual"]["y_m"]
             zz["footprint_m2"] = zz["floor_m2"] = spec["virtual"]["floor_m2"]
             zz["source"] = "ASSUMPTION (not mapped in OSM)"
-        pv = cc["pv"]
-        zz["pv_kwp"] = round(zz["footprint_m2"] * pv["usable_roof_frac"] * pv["kwp_per_m2"] * spec.get("pv_roof", 1.0), 1)
+    apply_area_targets(zones, cc)
+    assign_pv(zones, cc)
     lines = tie_lines({z: (v["cx"], v["cy"]) for z, v in zones.items()}, cc["tie_lines"]["max_degree"],
                       cc["tie_lines"]["extra_links"])
     out = {"campus": cc["display_name"], "credit": OSM_CREDIT, "osm_sha256": sha, "osm_file": str(raw_p.relative_to(ROOT)),
            "origin": {"lat": lat0, "lon": lon0}, "outline": campus_outline, "zones": zones,
+           "pv": {"scenario": cc["pv"].get("scenario", "existing"), "existing_kwp": cc["pv"].get("existing_kwp"),
+                  "status": cc["pv"].get("status", "ASSUMPTION"),
+                  "total_kwp": round(sum(z["pv_kwp"] for z in zones.values()), 1)},
+           "area_targets": cc.get("area_targets"),
            "lines": [list(l) for l in lines]}
     PROC.mkdir(parents=True, exist_ok=True)
     (PROC / "campus.json").write_text(json.dumps(out, indent=1))
     return out
+
+
+def apply_area_targets(zones: dict, cc: dict) -> None:
+    """Scale OSM floor areas to documented totals (config campus.area_targets, RVCE NAAC SSR 2024).
+    zones_floor_m2 fixes named zones; the other OSM-mapped zones are scaled together so their floor area sums to
+    other_zones_floor_m2. Footprints (roofs) stay as mapped in OSM when a zone is scaled down (the OSM excess is in the
+    assumed levels); a zone scaled up has unmapped buildings, so its footprint grows by the same factor (ASSUMPTION).
+    The OSM values are kept as osm_floor_m2 / osm_footprint_m2."""
+    at = cc.get("area_targets")
+    for zz in zones.values():
+        zz["osm_floor_m2"], zz["osm_footprint_m2"], zz["area_scale"] = zz["floor_m2"], zz["footprint_m2"], 1.0
+    if not at:
+        return
+    fixed = {z: float(v) for z, v in (at.get("zones_floor_m2") or {}).items()}
+    rest = [z for z, zz in zones.items() if z not in fixed and zz["source"] == "osm"]
+    targets = dict(fixed)
+    if at.get("other_zones_floor_m2") is not None and rest:
+        tot = sum(zones[z]["floor_m2"] for z in rest)
+        for z in rest:
+            targets[z] = zones[z]["floor_m2"] * float(at["other_zones_floor_m2"]) / tot
+    for z, target in targets.items():
+        zz = zones[z]
+        scale = target / zz["floor_m2"] if zz["floor_m2"] > 0 else 1.0
+        zz["area_scale"] = scale
+        zz["floor_m2"] = target
+        if scale > 1.0:              # more floor area than OSM maps -> unmapped buildings at the zone's mean OSM height
+            zz["footprint_m2"] *= scale
+            zz["footprint_note"] = ("ASSUMPTION: documented floor area exceeds OSM; footprint scaled by the same factor "
+                                    "(unmapped buildings at the zone's mean OSM levels)")
+
+
+def assign_pv(zones: dict, cc: dict) -> None:
+    """pv_kwp per zone. With campus.pv.existing_kwp: the existing (SOURCED) array, split by existing_zone_kwp where the
+    building list names zones, the rest by roof area (footprint x pv_roof, ASSUMPTION). pv_kwp_potential = roof
+    potential (footprint x usable_roof_frac x kwp_per_m2 x pv_roof). campus.pv.scenario: existing (baseline) uses the
+    existing array; proposed (PROPOSED scenario, not the baseline) uses max(existing, potential) per zone.
+    Without existing_kwp (other campuses): pv_kwp = roof potential, as before."""
+    pv = cc["pv"]
+    w = {z: zz["footprint_m2"] * cc["zones"][z].get("pv_roof", 1.0) for z, zz in zones.items()}
+    for z, zz in zones.items():
+        zz["pv_kwp_potential"] = round(w[z] * pv["usable_roof_frac"] * pv["kwp_per_m2"], 1)
+    if pv.get("existing_kwp") is None:
+        for zz in zones.values():
+            zz["pv_kwp"] = zz["pv_kwp_potential"]
+        return
+    named = {z: float(v) for z, v in (pv.get("existing_zone_kwp") or {}).items()}
+    rest_kwp = float(pv["existing_kwp"]) - sum(named.values())
+    wr = sum(v for z, v in w.items() if z not in named)
+    for z, zz in zones.items():
+        zz["pv_kwp_existing"] = round(named[z] if z in named else rest_kwp * w[z] / wr if wr > 0 else 0.0, 1)
+        zz["pv_kwp_basis"] = "SOURCED (building list)" if z in named else "SOURCED total, split by roof area (ASSUMPTION)"
+        scen = pv.get("scenario", "existing")
+        if scen not in ("existing", "proposed"):
+            raise ValueError(f"campus.pv.scenario must be existing or proposed, not {scen!r}")
+        zz["pv_kwp"] = zz["pv_kwp_existing"] if scen == "existing" else max(zz["pv_kwp_existing"], zz["pv_kwp_potential"])
 
 
 def tie_lines(pos: dict[str, tuple[float, float]], max_degree: int = 3, extra_links: int = 2) -> list[tuple[str, str]]:

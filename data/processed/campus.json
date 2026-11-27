@@ -159,10 +159,10 @@
  ],
  "zones": {
   "academic": {
-   "footprint_m2": 29202.60677523664,
-   "floor_m2": 95871.38377609597,
-   "cx": 3.7365204714858313,
-   "cy": 21.98525386681397,
+   "footprint_m2": 22385.19916100342,
+   "floor_m2": 40068.36138578027,
+   "cx": -27.00166027522882,
+   "cy": 36.430061979983826,
    "buildings": [
     {
      "osm_id": "way/132994721",
@@ -817,134 +817,6 @@
      ]
     },
     {
-     "osm_id": "way/1286468169",
-     "name": "RVU Block",
-     "levels": 4.0,
-     "area_m2": 2649.6,
-     "polygon": [
-      [
-       88.1,
-       -50.04
-      ],
-      [
-       125.75,
-       -62.28
-      ],
-      [
-       116.89,
-       -89.55
-      ],
-      [
-       89.68,
-       -80.7
-      ],
-      [
-       93.2,
-       -69.85
-      ],
-      [
-       81.22,
-       -65.57
-      ],
-      [
-       72.2,
-       -97.43
-      ],
-      [
-       84.27,
-       -103.39
-      ],
-      [
-       88.93,
-       -94.67
-      ],
-      [
-       103.48,
-       -102.82
-      ],
-      [
-       87.8,
-       -126.75
-      ],
-      [
-       47.62,
-       -104.37
-      ],
-      [
-       56.19,
-       -88.99
-      ],
-      [
-       60.36,
-       -91.3
-      ],
-      [
-       78.16,
-       -44.03
-      ],
-      [
-       89.95,
-       -43.59
-      ],
-      [
-       88.1,
-       -50.04
-      ]
-     ]
-    },
-    {
-     "osm_id": "way/1286468170",
-     "name": "RVU A Block",
-     "levels": 4.0,
-     "area_m2": 2967.4,
-     "polygon": [
-      [
-       101.83,
-       57.16
-      ],
-      [
-       146.05,
-       21.71
-      ],
-      [
-       123.41,
-       -31.33
-      ],
-      [
-       79.52,
-       -26.55
-      ],
-      [
-       82.1,
-       -2.89
-      ],
-      [
-       106.43,
-       -5.54
-      ],
-      [
-       110.75,
-       4.34
-      ],
-      [
-       115.01,
-       14.1
-      ],
-      [
-       88.83,
-       36.27
-      ],
-      [
-       92.19,
-       41.76
-      ],
-      [
-       101.83,
-       57.16
-      ]
-     ]
-    },
-    {
      "osm_id": "way/1286468172",
      "name": null,
      "levels": 3.0,
@@ -1069,42 +941,6 @@
       [
        139.36,
        84.2
-      ]
-     ]
-    },
-    {
-     "osm_id": "way/1313225782",
-     "name": "RVU C Block",
-     "levels": 4.0,
-     "area_m2": 1200.5,
-     "polygon": [
-      [
-       159.06,
-       36.92
-      ],
-      [
-       172.01,
-       27.84
-      ],
-      [
-       139.2,
-       -56.22
-      ],
-      [
-       117.64,
-       -54.69
-      ],
-      [
-       132.98,
-       -37.94
-      ],
-      [
-       155.62,
-       15.09
-      ],
-      [
-       159.06,
-       36.92
       ]
      ]
     },
@@ -1358,11 +1194,17 @@
     }
    ],
    "source": "osm",
-   "pv_kwp": 2365.4
+   "osm_floor_m2": 68601.75331916306,
+   "osm_footprint_m2": 22385.19916100342,
+   "area_scale": 0.5840719726122169,
+   "pv_kwp_potential": 1813.2,
+   "pv_kwp_existing": 226.7,
+   "pv_kwp_basis": "SOURCED total, split by roof area (ASSUMPTION)",
+   "pv_kwp": 226.7
   },
   "heavy_labs": {
    "footprint_m2": 9034.684030079996,
-   "floor_m2": 26663.744558233477,
+   "floor_m2": 15573.545881355692,
    "cx": -77.14966754279585,
    "cy": 28.005625698729258,
    "buildings": [
@@ -1616,11 +1458,17 @@
     }
    ],
    "source": "osm",
-   "pv_kwp": 731.8
+   "osm_floor_m2": 26663.744558233477,
+   "osm_footprint_m2": 9034.684030079996,
+   "area_scale": 0.584071972612217,
+   "pv_kwp_potential": 731.8,
+   "pv_kwp_existing": 91.5,
+   "pv_kwp_basis": "SOURCED total, split by roof area (ASSUMPTION)",
+   "pv_kwp": 91.5
   },
   "hostels": {
-   "footprint_m2": 2879.368429601029,
-   "floor_m2": 10029.976057315444,
+   "footprint_m2": 11098.114313970453,
+   "floor_m2": 38659.11,
    "cx": 151.30033920979693,
    "cy": -60.41026888789052,
    "buildings": [
@@ -1754,11 +1602,18 @@
     }
    ],
    "source": "osm",
-   "pv_kwp": 233.2
+   "osm_floor_m2": 10029.976057315444,
+   "osm_footprint_m2": 2879.368429601029,
+   "area_scale": 3.8543571568950723,
+   "footprint_note": "ASSUMPTION: documented floor area exceeds OSM; footprint scaled by the same factor (unmapped buildings at the zone's mean OSM levels)",
+   "pv_kwp_potential": 898.9,
+   "pv_kwp_existing": 112.4,
+   "pv_kwp_basis": "SOURCED total, split by roof area (ASSUMPTION)",
+   "pv_kwp": 112.4
   },
   "library": {
    "footprint_m2": 2787.4180984200357,
-   "floor_m2": 11149.672393680143,
+   "floor_m2": 6512.21114895674,
    "cx": -23.572465307278133,
    "cy": -42.77436260197808,
    "buildings": [
@@ -1848,11 +1703,17 @@
     }
    ],
    "source": "osm",
-   "pv_kwp": 225.8
+   "osm_floor_m2": 11149.672393680143,
+   "osm_footprint_m2": 2787.4180984200357,
+   "area_scale": 0.584071972612217,
+   "pv_kwp_potential": 225.8,
+   "pv_kwp_existing": 28.2,
+   "pv_kwp_basis": "SOURCED total, split by roof area (ASSUMPTION)",
+   "pv_kwp": 28.2
   },
   "canteen": {
    "footprint_m2": 1923.174811625276,
-   "floor_m2": 5158.335817913573,
+   "floor_m2": 3012.8393765650344,
    "cx": -88.57468044854382,
    "cy": -29.801854845488492,
    "buildings": [
@@ -2038,13 +1899,19 @@
     }
    ],
    "source": "osm",
-   "pv_kwp": 155.8
+   "osm_floor_m2": 5158.335817913573,
+   "osm_footprint_m2": 1923.174811625276,
+   "area_scale": 0.584071972612217,
+   "pv_kwp_potential": 155.8,
+   "pv_kwp_existing": 19.5,
+   "pv_kwp_basis": "SOURCED total, split by roof area (ASSUMPTION)",
+   "pv_kwp": 19.5
   },
   "admin": {
-   "footprint_m2": 1886.3801489475738,
-   "floor_m2": 5659.140446842722,
-   "cx": -154.22823350388026,
-   "cy": 13.821397842631114,
+   "footprint_m2": 792.2805406264242,
+   "floor_m2": 1388.2465746778478,
+   "cx": -203.4715996071458,
+   "cy": 65.9264870000455,
    "buildings": [
     {
      "osm_id": "way/133053007",
@@ -2101,50 +1968,20 @@
        44.0
       ]
      ]
-    },
-    {
-     "osm_id": "way/1467210438",
-     "name": "RVU Admin Block",
-     "levels": 3.0,
-     "area_m2": 1094.1,
-     "polygon": [
-      [
-       -120.96,
-       -40.7
-      ],
-      [
-       -144.74,
-       -19.93
-      ],
-      [
-       -121.5,
-       6.59
-      ],
-      [
-       -97.16,
-       -14.46
-      ],
-      [
-       -109.74,
-       -25.67
-      ],
-      [
-       -114.93,
-       -32.51
-      ],
-      [
-       -120.96,
-       -40.7
-      ]
-     ]
     }
    ],
    "source": "osm",
-   "pv_kwp": 152.8
+   "osm_floor_m2": 2376.8416218792727,
+   "osm_footprint_m2": 792.2805406264242,
+   "area_scale": 0.5840719726122169,
+   "pv_kwp_potential": 64.2,
+   "pv_kwp_existing": 8.0,
+   "pv_kwp_basis": "SOURCED total, split by roof area (ASSUMPTION)",
+   "pv_kwp": 8.0
   },
   "server_room": {
    "footprint_m2": 644.7400860115085,
-   "floor_m2": 1289.480172023017,
+   "floor_m2": 753.1492277178245,
    "cx": -118.37938148298639,
    "cy": -77.41223321152975,
    "buildings": [
@@ -2210,11 +2047,17 @@
     }
    ],
    "source": "osm",
-   "pv_kwp": 52.2
+   "osm_floor_m2": 1289.480172023017,
+   "osm_footprint_m2": 644.7400860115085,
+   "area_scale": 0.584071972612217,
+   "pv_kwp_potential": 52.2,
+   "pv_kwp_existing": 6.5,
+   "pv_kwp_basis": "SOURCED total, split by roof area (ASSUMPTION)",
+   "pv_kwp": 6.5
   },
   "health_centre": {
    "footprint_m2": 706.4992403266126,
-   "floor_m2": 706.4992403266126,
+   "floor_m2": 412.64640494659733,
    "cx": -0.11663787058334929,
    "cy": 162.96691399999906,
    "buildings": [
@@ -2260,7 +2103,13 @@
     }
    ],
    "source": "osm",
-   "pv_kwp": 57.2
+   "osm_floor_m2": 706.4992403266126,
+   "osm_footprint_m2": 706.4992403266126,
+   "area_scale": 0.5840719726122169,
+   "pv_kwp_potential": 57.2,
+   "pv_kwp_existing": 7.2,
+   "pv_kwp_basis": "SOURCED total, split by roof area (ASSUMPTION)",
+   "pv_kwp": 7.2
   },
   "pumping_station": {
    "footprint_m2": 60,
@@ -2269,10 +2118,32 @@
    "cy": 120.0,
    "buildings": [],
    "source": "ASSUMPTION (not mapped in OSM)",
+   "osm_floor_m2": 60,
+   "osm_footprint_m2": 60,
+   "area_scale": 1.0,
+   "pv_kwp_potential": 0.0,
+   "pv_kwp_existing": 0.0,
+   "pv_kwp_basis": "SOURCED total, split by roof area (ASSUMPTION)",
    "pv_kwp": 0.0
   }
  },
+ "pv": {
+  "scenario": "existing",
+  "existing_kwp": 500.0,
+  "status": "SOURCED, VERIFICATION PENDING (PDF not yet in data/raw/rvce/)",
+  "total_kwp": 500.0
+ },
+ "area_targets": {
+  "zones_floor_m2": {
+   "hostels": 38659.11
+  },
+  "other_zones_floor_m2": 67721
+ },
  "lines": [
+  [
+   "academic",
+   "heavy_labs"
+  ],
   [
    "canteen",
    "server_room"
@@ -2287,26 +2158,22 @@
   ],
   [
    "academic",
-   "library"
+   "health_centre"
   ],
   [
    "heavy_labs",
    "admin"
   ],
   [
-   "academic",
-   "health_centre"
-  ],
-  [
-   "academic",
-   "hostels"
+   "hostels",
+   "library"
   ],
   [
    "hostels",
    "pumping_station"
   ],
   [
-   "heavy_labs",
+   "academic",
    "library"
   ],
   [

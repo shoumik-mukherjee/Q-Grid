@@ -13,10 +13,38 @@ campus:
   display_name: "RVCE"
   osm_name: "R. V. College of Engineering"
   slug: rvce
-  pv: {usable_roof_frac: 0.45, kwp_per_m2: 0.18}      # ASSUMPTION: 45 % of roof usable, 180 Wp/m2 modules
-  tie_lines: {max_degree: 3, extra_links: 2, step_kw: 120}   # ASSUMPTION: flow levels {-120, 0, +120} kW
+  # Component status: EXISTING = documented at RVCE (source given); PROPOSED = part of the Q-Grid design, not on campus
+  # today (battery banks, inter-building tie-line cables, EV-charging load, extra PV); ASSUMPTION = engineering guess.
+  pv:
+    # EXISTING rooftop PV, SOURCED (VERIFICATION PENDING): RVCE "21. Electrical Grid Power Supply Connection"
+    # (https://rvce.edu.in/sites/default/files/21.%20Electrical%20Grid%20Power%20Supply%20Connection.pdf): 1,564 modules
+    # x 320 Wp on 21 rooftops = 500.48 kWp; inverters 6 x 50 + 6 x 30 + 1 x 20 kW = 500 kW. Figures as reported by the
+    # team; rvce.edu.in refuses scripted downloads, so the PDF is not yet in data/raw/rvce/ and has not been read here.
+    status: "SOURCED, VERIFICATION PENDING (PDF not yet in data/raw/rvce/)"
+    existing_kwp: 500.0
+    existing_zone_kwp: {}     # per-zone kWp from the building list (NAAC 7.1.2 geotagged photos PDF, PENDING); zones not
+                              # listed share the rest by roof area = footprint x pv_roof (ASSUMPTION)
+    scenario: existing        # existing = baseline (500 kWp). proposed = PROPOSED scenario: each zone max(existing share,
+                              # roof potential below); never the baseline
+    usable_roof_frac: 0.45    # PROPOSED scenario only: ASSUMPTION, 45 % of roof usable
+    kwp_per_m2: 0.18          # PROPOSED scenario only: ASSUMPTION, 180 Wp/m2 modules
+  # Floor areas (drive loads = floor area x EPI). SOURCED: RVCE NAAC SSR 2024 (data/raw/rvce/Final-submitted-SSR_28-June-2024_latest.pdf).
+  area_targets:
+    zones_floor_m2:
+      hostels: 38659.11       # p78 "three Boys Hostels(1185 rooms, 38659.11 sq. m, 1450 capacity)"; girls' hostels
+                              # (95 rooms on campus, p78) have no area in the SSR and are not added
+    # p12 "Main campus area ... Campus Area in Acres 16.85 ... Built up Area in sq.mts. 67721". INTERPRETATION
+    # (ASSUMPTION): 67,721 m2 excludes the boys' hostels (if it included them, the other buildings would have only
+    # 29,062 m2, less than their mapped OSM roof area). The other OSM zones (RV University buildings excluded) are
+    # scaled together to this total.
+    other_zones_floor_m2: 67721
+  tie_lines: {max_degree: 3, extra_links: 2, step_kw: 120}   # PROPOSED inter-building cables (Q-Grid design); ASSUMPTION: flow levels {-120, 0, +120} kW
   # first matching rule wins (regex on OSM name / tags); exclude=true drops the feature
   zone_rules:
+    # RV University (a separate institution on the RV Vidyaniketan campus) is excluded by its OSM names; the OSM outline
+    # (49.6 acres) is the whole campus, RVCE's main campus is 16.85 acres (SSR p12). Unnamed buildings cannot be
+    # attributed from OSM, so the floor area is scaled to the SSR figure instead (area_targets).
+    - {exclude: true, name_regex: '^RVU\b', rvce_only: true}
     - {exclude: true, tags: {building: "construction|roof|garage"}}
     - {exclude: true, tags: {leisure: "."}}
     - {exclude: true, tags: {amenity: "parking|motorcycle_parking"}}
@@ -39,9 +67,9 @@ campus:
       epi_kwh_m2_yr: 60
       profile: academic
       critical_frac: 0.05
-      battery: {kwh: 400, kw: 200}
+      battery: {kwh: 400, kw: 200}   # PROPOSED (Q-Grid design; no battery documented at RVCE)
       flex:
-        - {name: ev_charging, kw: 44, slots: 12, earliest: "08:00", latest: "15:00", default: "09:00"}
+        - {name: ev_charging, kw: 44, slots: 12, earliest: "08:00", latest: "15:00", default: "09:00"}   # PROPOSED (no EV chargers documented; SSR p108: staff/students use EVs)
         - {name: auditorium_precool, kw: 60, slots: 4, earliest: "11:00", latest: "16:00", default: "16:00"}
       fest_load: {kw: 150, start: "17:00", end: "22:30"}   # ASSUMPTION: stage, lighting, sound
     heavy_labs:
@@ -49,7 +77,7 @@ campus:
       epi_kwh_m2_yr: 90
       profile: labs
       critical_frac: 0.05
-      battery: {kwh: 200, kw: 100}
+      battery: {kwh: 200, kw: 100}   # PROPOSED (Q-Grid design; no battery documented at RVCE)
       flex:
         - {name: heavy_lab_machines, kw: 60, slots: 8, earliest: "09:00", latest: "14:00", default: "10:00"}
     hostels:
@@ -57,8 +85,8 @@ campus:
       epi_kwh_m2_yr: 45
       profile: hostel          # Ausgrid residential shape (real data), scaled
       critical_frac: 0.10
-      battery: {kwh: 300, kw: 150}
-      dg: {kw: 100, min_load_frac: 0.3, min_on_slots: 4}
+      battery: {kwh: 300, kw: 150}   # PROPOSED (Q-Grid design; no battery documented at RVCE)
+      dg: {kw: 392, kva: 490, min_load_frac: 0.3, min_on_slots: 4}   # EXISTING, see diesel note below (set 1 of 2)
       flex:
         - {name: water_heaters, kw: 60, slots: 8, earliest: "01:00", latest: "04:00", default: "04:00"}
         - {name: laundry, kw: 25, slots: 8, earliest: "08:00", latest: "18:00", default: "18:00"}
@@ -67,7 +95,7 @@ campus:
       epi_kwh_m2_yr: 70
       profile: library
       critical_frac: 0.05
-      battery: {kwh: 150, kw: 75}
+      battery: {kwh: 150, kw: 75}   # PROPOSED (Q-Grid design; no battery documented at RVCE)
       flex:
         - {name: hvac_precool, kw: 25, slots: 4, earliest: "08:00", latest: "15:00", default: "15:00"}
     canteen:
@@ -75,7 +103,7 @@ campus:
       epi_kwh_m2_yr: 150
       profile: canteen
       critical_frac: 0.15
-      battery: {kwh: 100, kw: 50}
+      battery: {kwh: 100, kw: 50}   # PROPOSED (Q-Grid design; no battery documented at RVCE)
       flex:
         - {name: cold_storage_cycle, kw: 15, slots: 6, earliest: "00:00", latest: "16:00", default: "16:00"}
     admin:
@@ -83,21 +111,21 @@ campus:
       epi_kwh_m2_yr: 80
       profile: office
       critical_frac: 0.10
-      battery: {kwh: 150, kw: 75}
-      dg: {kw: 200, min_load_frac: 0.3, min_on_slots: 4}
+      battery: {kwh: 150, kw: 75}   # PROPOSED (Q-Grid design; no battery documented at RVCE)
+      dg: {kw: 392, kva: 490, min_load_frac: 0.3, min_on_slots: 4}   # EXISTING, see diesel note below (set 2 of 2)
     server_room:
       levels: 2
       epi_kwh_m2_yr: 1200
       profile: flat
       critical_frac: 1.0
-      battery: {kwh: 120, kw: 60}         # UPS bank
+      battery: {kwh: 120, kw: 60}   # UPS bank: UPS EXISTS (SSR p69), capacity not documented -> 120 kWh / 60 kW ASSUMPTION
       pv_roof: 1.0
     health_centre:
       levels: 1
       epi_kwh_m2_yr: 150
       profile: health
       critical_frac: 0.8
-      battery: {kwh: 40, kw: 20}
+      battery: {kwh: 40, kw: 20}   # PROPOSED (Q-Grid design; no battery documented at RVCE)
     pumping_station:
       profile: none
       critical_frac: 0.0
@@ -125,6 +153,11 @@ pv_model: {noct_c: 45.0, gamma_per_c: -0.004, system_derate: 0.86}
 battery_defaults: {soc_min: 0.20, soc_max: 0.95, soc0: 0.50, eta_ch: 0.95, eta_dis: 0.95}
 
 diesel:                       # ASSUMPTIONS (generic linear fuel curve; replace with RVCE DG logs)
+  # EXISTING sets, SOURCED with INTERPRETATION: SSR p69 "UPS along with two generators of capacity 980 KVA are available.
+  # It is planned to add three more generators with capacity 750 KVA each" (data/raw/rvce/Final-submitted-SSR_28-June-2024_latest.pdf). Read as 980 kVA in total for
+  # the two existing sets (490 kVA each, INTERPRETATION); the planned 3 x 750 kVA are excluded. kW = kVA x 0.8 (DG rated
+  # power factor, ASSUMPTION) = 392 kW per set. Which buildings they feed is not stated: placed at hostels and admin
+  # (ASSUMPTION, as before).
   price_rs_per_l: 90.0
   fuel_l_per_kwh_rated: 0.08  # L/h per kW rated (no-load intercept)
   fuel_l_per_kwh_out: 0.25    # L per kWh delivered
