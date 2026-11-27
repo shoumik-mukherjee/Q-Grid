@@ -22,7 +22,7 @@ def main():
     from qgrid.operate.flows import energy_flows
     campus = load_campus(); proc = qd.load_processed()
     for f in sorted((ROOT / "results" / "replay").glob("scenario_*.json")):
-        sc = json.loads(f.read_text()); key = sc["scenario"]["key"]
+        sc = json.loads(f.read_text(encoding="utf-8")); key = sc["scenario"]["key"]
         day = make_day(campus, proc, sc["scenario"]["date"], "A", key, sc["scenario"].get("outage"))
         out = {"day": sc["scenario"]["date"], "label": LABEL.get(key, key), "scenario": key}
         for name in ("qgrid", "status_quo"):
@@ -34,7 +34,7 @@ def main():
             s.flex_start = [dict(x) for x in r["flex_start"]]
             out[name] = energy_flows(campus, day, s)
         p = ROOT / "results" / "replay" / f"sankey_{key}.json"
-        p.write_text(json.dumps(out)); shutil.copy(p, ROOT / "frontend" / "public" / "replay" / p.name)
+        p.write_text(json.dumps(out), encoding="utf-8"); shutil.copy(p, ROOT / "frontend" / "public" / "replay" / p.name)
         print(f"{key}: solar {out['qgrid']['sources_kwh']['Solar']:,.0f} kWh, grid {out['qgrid']['sources_kwh']['Grid']:,.0f} kWh")
 
 

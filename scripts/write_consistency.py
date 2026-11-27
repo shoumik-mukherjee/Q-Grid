@@ -25,7 +25,7 @@ NAMES = {"status_quo": "Status quo", "rule_based": "Rule-based battery controlle
 
 
 def main(d: Path):
-    cfg = yaml.safe_load((ROOT / "config.yaml").read_text())
+    cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
     oc = cfg["outage_costs"]
     r = pd.read_csv(d / "daily.csv")
     rv = r[r.dataset == "rvce"]
@@ -113,8 +113,7 @@ def main(d: Path):
     sys.path[:0] = [str(ROOT / "backend")]
     from qgrid.model import wear_rate
     wr = wear_rate(cfg)
-    L += ["## 5. Battery wear is priced the same way everywhere
-",
+    L += ["## 5. Battery wear is priced the same way everywhere\n",
           f"- Every optimiser (Q-Grid, per-building and central MPC, GA, PSO, the best possible plan, the certified bounds) prices "
           f"battery wear at Rs {wr:.2f} per kWh charged or discharged = battery cost / (2 × cycle life × depth of discharge) "
           "(`config.yaml` → `economics`, `battery_wear`; ASSUMPTIONS). The scored objective includes the same term, and the "
@@ -127,7 +126,7 @@ def main(d: Path):
         for m, x in g.groupby("method"):
             L.append(f"| {NAMES[m]} | {x.battery_cycles.mean():.2f} | {x.wear_rs.mean():,.0f} |")
         L.append("")
-    (ROOT / "docs" / "consistency.md").write_text("\n".join(L) + "\n")
+    (ROOT / "docs" / "consistency.md").write_text("\n".join(L) + "\n", encoding="utf-8")
     print("wrote docs/consistency.md")
 
 

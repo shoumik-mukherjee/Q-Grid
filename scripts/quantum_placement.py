@@ -152,7 +152,7 @@ def main(days_n=4):
             "time_warm_mean_qaoa_instances_s": float(q.warm_time_s.mean()) if len(q) else None,
             "days": [d for d, _ in days],
             "label": "QAOA on a local simulator: verified against exact solutions, no quantum advantage claimed"}
-    json.dump(summ, open(OUT / "summary.json", "w"), indent=1)
+    json.dump(summ, open(OUT / "summary.json", "w", encoding="utf-8"), indent=1)
     print(json.dumps(summ, indent=1))
 
 

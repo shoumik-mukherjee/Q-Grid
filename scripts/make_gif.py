@@ -12,7 +12,7 @@ WINDOWS = [("2", 2.0), ("4c", 3.0), ("4d", 2.0), ("5", 5.0), ("7a", 3.0)]   # ch
 
 def main(src: str, dst: str, width: int = 720):
     d = Path(src)
-    meta = json.loads((d / "marks.json").read_text())
+    meta = json.loads((d / "marks.json").read_text(encoding="utf-8"))
     marks = {m["stop"]: m["t"] for m in meta["marks"]}
     files = sorted(d.glob("f*.jpg"))
     n = len(files)

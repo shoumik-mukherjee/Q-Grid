@@ -45,7 +45,7 @@ def _block_instances():
     p = OUT / "qaoa_blocks.json"
     if not p.exists():
         return []
-    return json.loads(p.read_text())["blocks"]
+    return json.loads(p.read_text(encoding="utf-8"))["blocks"]
 
 
 def _best_from_counts(counts: dict, n: int, J_all: np.ndarray) -> tuple[float, float]:
@@ -159,7 +159,7 @@ def campus_qubo() -> dict:
     out = {"n_binaries": n, "J_exact_milp": exact, "sa_best_J": sa_best, "sa_gap_pct": 100 * (sa_best - exact) / abs(exact),
            "sa_time_s": time.time() - t0, "note": "the master separates by building, so the campus QUBO is block-diagonal"}
     (OUT / "campus_qubo.json").write_text(json.dumps({"n": n, "const": const, "M_nonzero": [[int(a), int(b), float(M[a, b])]
-                                                      for a, b in zip(*np.nonzero(M)) if a <= b]}))
+                                                      for a, b in zip(*np.nonzero(M)) if a <= b]}), encoding="utf-8")
     ok, why = _ready("DWAVE_API_TOKEN", "QGRID_ALLOW_DWAVE", "dwave.system")
     if ok:
         from dwave.system import LeapHybridSampler
@@ -178,7 +178,7 @@ def campus_qubo() -> dict:
 def main():
     OUT.mkdir(parents=True, exist_ok=True)
     rep = {"label": LABEL, "ibm": ibm_and_aer(), "dwave": campus_qubo()}
-    (OUT / "hardware.json").write_text(json.dumps(rep, indent=1, default=float))
+    (OUT / "hardware.json").write_text(json.dumps(rep, indent=1, default=float), encoding="utf-8")
     print(json.dumps({"ibm": rep["ibm"]["status"], "dwave": rep["dwave"]["dwave"],
                       "aer_found_opt": [r["aer_found_opt"] for r in rep["ibm"]["rows"]],
                       "sa_gap_pct": rep["dwave"]["sa_gap_pct"]}, indent=1))

@@ -6,6 +6,7 @@ import { useEffect, useMemo, useState } from 'react'
 import type { StoryData } from '../lib/story'
 import { useC } from '../lib/theme'
 import { lakh } from '../story/Impact'
+import { tariffIsReal } from '../lib/data'
 
 type Box = { id: string; x: number; y: number; w: number; h: number; title: string; sub: string; does: string; hw: string[]; cost?: string }
 const BOXES: Box[] = [
@@ -72,11 +73,11 @@ export function DeployView({ d }: { d: StoryData }) {
             <tr><td><b>Per building node</b></td><td className="tn"><b>Rs {m.per_building[0].hardware_rs[0].toLocaleString('en-IN')}–{m.per_building[0].hardware_rs[1].toLocaleString('en-IN')}</b></td><td className="muted">sum of the above</td></tr></tbody></table></div>
         <div className="keys-row k4">
           <div className="key"><span className="kl">Campus, {m.n_buildings} buildings (central case)</span><b className="kv">{lakh(m.central.hardware_rs)}</b></div>
-          <div className="key"><span className="kl">Payback, battery wear included <span className="pending">stand-in tariff</span></span><b className="kv">{m.central.payback_net_years !== null ? `${m.central.payback_net_years.toFixed(1)} y` : 'not reached'}</b></div>
+          <div className="key"><span className="kl">Payback, battery wear included {!tariffIsReal(m.status) && <span className="pending">stand-in tariff</span>}</span><b className="kv">{m.central.payback_net_years !== null ? `${m.central.payback_net_years.toFixed(1)} y` : 'not reached'}</b></div>
           <div className="key"><span className="kl">10-year NPV</span><b className="kv">{lakh(m.central.npv_net_rs)}</b><span className="kn">P5–P95 {lakh(m.monte_carlo.npv_net_rs.p5)} to {lakh(m.monte_carlo.npv_net_rs.p95)}</span></div>
           <div className="key"><span className="kl">Chance the NPV is positive</span><b className="kv">{Math.round(100 * m.monte_carlo.npv_net_rs.prob_positive)}%</b><span className="kn">{m.monte_carlo.samples.toLocaleString('en-IN')} Monte Carlo samples</span></div>
         </div>
-        <p className="muted small">From the economics module (scripts/write_impact.py, docs/impact.md). Batteries, solar and diesel sets are already on campus in this model; their wear is counted.</p>
+        <p className="muted small">From the economics module (scripts/write_impact.py, docs/impact.md). Solar (500 kWp) and the diesel sets exist at RVCE; the batteries are PROPOSED (Q-Grid design) and their purchase cost is not included; their wear is counted.</p>
       </section>}
 
       <section className="card"><h3>Safety and security</h3>

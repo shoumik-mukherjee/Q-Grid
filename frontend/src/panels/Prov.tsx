@@ -44,7 +44,7 @@ export const FORMULA: Record<string, string> = {
   dg_litres: 'sum_t on*(a*kW_rated + b*kW_out)*dt  (fuel curve ASSUMPTION)',
   critical_downtime_h: 'number of slots with any unserved critical load x 0.25 h',
   critical_unserved_kwh: 'sum_t max(deficit - non-critical demand, 0)*dt in islanded slots',
-  co2_kg: 'grid import kWh x CEA factor (PENDING) + diesel litres x 2.68 kg/L (ASSUMPTION)',
+  co2_kg: 'grid import kWh x CEA grid emission factor (data/raw/cea/emission_factor.yaml; status in data_status.cea) + diesel litres x 2.68 kg/L (ASSUMPTION)',
   gap_to_B4_pct: '100 * (objective_rs - objective_rs[B4]) / |objective_rs[B4]|',
   replan_time_s: 'mean wall time per 15-min slot of the controller (ADMM rounds + local solves)',
   qaoa_p_opt: 'mean over local solves of the QAOA probability mass on the exact optimum',

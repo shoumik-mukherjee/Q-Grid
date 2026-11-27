@@ -42,7 +42,7 @@ def main(n_inst: int = 16, seed: int = 7):
                                  "mean_energy": round(f, 6), "train_time_s": round(time.time() - t0, 1)}
         print(f"p={p}: <H>={f:.4f}  gammas={np.round(g, 3)} betas={np.round(b, 3)}  ({time.time() - t0:.1f}s)")
     PARAMS_FILE.parent.mkdir(exist_ok=True)
-    PARAMS_FILE.write_text(json.dumps(out, indent=2))
+    PARAMS_FILE.write_text(json.dumps(out, indent=2), encoding="utf-8")
     print("saved", PARAMS_FILE.relative_to(ROOT))
 
 

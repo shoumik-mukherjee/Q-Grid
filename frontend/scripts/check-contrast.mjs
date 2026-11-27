@@ -8,6 +8,8 @@
 //    pixels behind labels that float over the 3D scene. Body text needs 4.5:1, large text (>= 24px, or >= 18.66px
 //    bold) needs 3:1. Disabled controls are exempt (WCAG 1.4.3).
 import { spawn } from 'node:child_process'
+import { join } from 'node:path'
+import { fileURLToPath } from 'node:url'
 import { DARK, LIGHT } from '../src/lib/tokens.ts'
 import { evaluate, key, launch, sleep, waitFor } from './cdp.mjs'
 
@@ -109,7 +111,9 @@ const SCAN = `(() => {
 
 async function startVite() {
   const port = 5190 + Math.floor(Math.random() * 50)
-  const p = spawn('npx', ['vite', '--port', String(port), '--strictPort'], { stdio: 'ignore', cwd: new URL('..', import.meta.url).pathname })
+  // node + vite's own entry: no shell needed (npx is npx.cmd on Windows) and kill() stops the server itself
+  const root = fileURLToPath(new URL('..', import.meta.url))
+  const p = spawn(process.execPath, [join(root, 'node_modules', 'vite', 'bin', 'vite.js'), '--port', String(port), '--strictPort'], { stdio: 'ignore', cwd: root })
   const url = `http://localhost:${port}`
   for (let i = 0; i < 80; i++) { try { if ((await fetch(url)).ok) return { url, stop: () => p.kill() } } catch { /* starting */ } await sleep(250) }
   p.kill(); throw new Error('vite did not start')

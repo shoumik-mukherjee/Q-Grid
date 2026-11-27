@@ -133,7 +133,8 @@ def main(workers: int | None = None):
     scen_list = cfg["prices"]["scenarios"]
     tasks = [(v["date"], k, s) for s in scen_list for k, v in meta["days"]["scenarios"].items()]
     tasks += [(d, "eval", s) for s in scen_list for d in meta["days"]["eval_days"]]
-    workers = workers or max(1, (os.cpu_count() or 2) - 2)
+    from qgrid.parallel import workers as _workers
+    workers = _workers(workers)
     print(f"{len(tasks)} tasks on {workers} workers", flush=True)
     results = []
     with ProcessPoolExecutor(max_workers=workers) as ex:
@@ -197,7 +198,7 @@ def main(workers: int | None = None):
                                                             "critical_unserved_kwh", "unserved_kwh", "replan_time_s")},
             "optimum_B4": {k: float(h.loc["B4", k]) for k in ("cost_rs", "critical_downtime_h", "critical_unserved_kwh")},
             "source": "results/benchmark.csv rows method in {B0, OURS, B4}, scenario=" + hs + ", price_scenario=A"}
-    (ROOT / "results" / "headline.json").write_text(json.dumps(card, indent=2))
+    (ROOT / "results" / "headline.json").write_text(json.dumps(card, indent=2), encoding="utf-8")
 
     # battery payback (ASSUMPTION capex) from B5 with vs without batteries on the 30-day set
     eco = {}
@@ -210,7 +211,7 @@ def main(workers: int | None = None):
                   "battery_saving_rs_per_day": saving_day, "annual_saving_rs": saving_day * 365,
                   "simple_payback_years": capex / (saving_day * 365) if saving_day > 0 else None,
                   "method": "mean daily cost B5 without batteries minus B5 with batteries, 30-day set, x365"}
-    (ROOT / "results" / "economics.json").write_text(json.dumps(eco, indent=2))
+    (ROOT / "results" / "economics.json").write_text(json.dumps(eco, indent=2), encoding="utf-8")
 
     counts = {}
     for i, b in enumerate(campus.buildings):
@@ -222,7 +223,7 @@ def main(workers: int | None = None):
     (ROOT / "results" / "search_space.json").write_text(json.dumps(
         {"centralised_full_day": search_space(full), "local_qubo_qubits": counts,
          "note": "centralised: per slot one charge + one discharge bit per battery, DG, pump, job-start bits and "
-                 "2 bits per tie-line; local QUBOs: horizon of 3 slots, capped at 16 qubits"}, indent=2))
+                 "2 bits per tie-line; local QUBOs: horizon of 3 slots, capped at 16 qubits"}, indent=2), encoding="utf-8")
 
     rdir, sdir = ROOT / "results" / "replay", ROOT / "results" / "schedules"
     sdir.mkdir(exist_ok=True)
@@ -230,10 +231,10 @@ def main(workers: int | None = None):
         if r["key"] != "eval":
             if r["extra"]["admm_log"]:
                 (rdir / f"admm_{r['key']}_{r['scen']}.json").write_text(
-                    json.dumps({"label": QUANTUM_LABEL, "day": r["day"], **r["extra"]["admm_log"]}, default=float))
+                    json.dumps({"label": QUANTUM_LABEL, "day": r["day"], **r["extra"]["admm_log"]}, default=float), encoding="utf-8")
             (sdir / f"{r['key']}_{r['scen']}.json").write_text(
                 json.dumps({"day": r["day"], "scenario": r["key"], "price_scenario": r["scen"], **r["extra"]["schedules"]},
-                           default=float))
+                           default=float), encoding="utf-8")
     make_plots(df, status)
     print(f"done in {time.time() - t_all:.0f}s")
     print(ev.pivot_table(index="method", columns="price_scenario", values=["cost_rs", "gap_to_B4_pct"]).round(2))

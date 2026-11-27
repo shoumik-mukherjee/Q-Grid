@@ -97,6 +97,9 @@ export type V2Example = {
   commitment: Record<string, Commitment>
   admm_rounds: { k: number; r_primal: number; agreed: boolean; proposals: Record<string, number[]> }[]
 }
+/** true when a generated status string (e.g. impact.json `status`) says the tariff is REAL (written by qgrid.provenance) */
+export const tariffIsReal = (status?: string) => !!status && /\(REAL\)/.test(status)
+
 export type V2Data = { rows: V2Row[]; summary: (V2Row & { day_set: string; n_days: number })[]; tariff_status: string
   demand_rs_per_kva_month: number; days_per_month: number; power_factor: number; label: string
   replay_matches_benchmark?: boolean; example?: V2Example }

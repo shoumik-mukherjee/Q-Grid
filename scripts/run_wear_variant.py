@@ -22,7 +22,7 @@ sys.path[:0] = [str(ROOT / "backend"), str(ROOT), str(ROOT / "scripts")]
 
 
 def wear_rate() -> float:
-    im = yaml.safe_load((ROOT / "config.yaml").read_text())["impact"]
+    im = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))["impact"]
     mid = lambda v: 0.5 * (v[0] + v[1])   # noqa: E731
     return mid(im["battery_capex_rs_per_kwh"]) / (2 * mid(im["battery_cycle_life"]) * float(im["battery_dod"]))
 
@@ -62,4 +62,5 @@ def main(workers: int):
 
 
 if __name__ == "__main__":
-    main(next((int(a.split("=")[1]) for a in sys.argv if a.startswith("--workers=")), 2))
+    from qgrid.parallel import workers as _workers
+    main(_workers(next((int(a.split("=")[1]) for a in sys.argv if a.startswith("--workers=")), None), default=2))

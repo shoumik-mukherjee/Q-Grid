@@ -46,7 +46,7 @@ def run(day: str, scenario: str = "A", method: str = "qaoa", kill: str | None = 
         p.wait(timeout=1800)
     wall = time.time() - t0
 
-    recs = {b: json.loads(o.read_text()) for b, o in outs.items() if o.exists()}
+    recs = {b: json.loads(o.read_text(encoding="utf-8")) for b, o in outs.items() if o.exists()}
     sched = Schedule.empty(campus)
     consistent = True
     for i, b in enumerate(campus.names):
@@ -108,7 +108,7 @@ def run(day: str, scenario: str = "A", method: str = "qaoa", kill: str | None = 
         "price_status": dd.status["price_scenario"],
     }
     tag = f"run_{day}_{scenario}" + (f"_kill-{kill}" if kill else "")
-    (outdir / f"{tag}.json").write_text(json.dumps({**res, "nodes": recs}, default=str))
+    (outdir / f"{tag}.json").write_text(json.dumps({**res, "nodes": recs}, default=str), encoding="utf-8")
     return res
 
 

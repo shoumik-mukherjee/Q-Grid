@@ -167,7 +167,8 @@ def run_one(ds: str, day: str, method: str, return_sched: bool = False) -> dict:
             "objective_incl_demand_rs": m["objective_incl_demand_rs"], "runtime_s": rt,
             "runtime_per_decision_s": st.get("plan_time_s", rt / decisions), "messages": st.get("messages", 0),
             "admm_converged_rate": st.get("admm_converged_rate", np.nan), "master_opt_share": st.get("master_opt_share", np.nan),
-            "fallback_slots": st.get("fallback_slots", 0), "works_without_coordinator": WITHOUT_COORDINATOR.get(method, True)}
+            "fallback_slots": st.get("fallback_slots", 0), "mip_timelimit": st.get("mip_timelimit", 0),
+            "dg_guard_used": st.get("dg_guard_used", 0), "works_without_coordinator": WITHOUT_COORDINATOR.get(method, True)}
 
 
 def run_bound(ds: str, day: str) -> dict:
@@ -217,12 +218,13 @@ def main(workers: int, ndays: int, qgrid: str):
     pd.DataFrame(rows).to_csv(OUT / "runs.csv", index=False)
     pd.DataFrame(bounds).to_csv(OUT / "bounds.csv", index=False)
     json.dump({"runtime_s": time.time() - t_all, "workers": workers, "days_per_dataset": ndays, "qgrid_combo": qgrid,
-               "datasets": DATASETS, "methods": MAIN, "design_choices": DESIGN}, open(OUT / "run_info.json", "w"), indent=1)
+               "datasets": DATASETS, "methods": MAIN, "design_choices": DESIGN}, open(OUT / "run_info.json", "w", encoding="utf-8"), indent=1)
     print(f"done in {time.time() - t_all:.0f} s", flush=True)
 
 
 if __name__ == "__main__":
-    w = next((int(a.split("=")[1]) for a in sys.argv if a.startswith("--workers=")), max(1, (os.cpu_count() or 2) - 2))
+    from qgrid.parallel import workers as _workers
+    w = _workers(next((int(a.split("=")[1]) for a in sys.argv if a.startswith("--workers=")), None))
     nd = next((int(a.split("=")[1]) for a in sys.argv if a.startswith("--days=")), 30)
     qg = next((a.split("=")[1] for a in sys.argv if a.startswith("--qgrid=")), QGRID)
     QGRID = qg

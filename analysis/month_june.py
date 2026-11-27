@@ -67,5 +67,5 @@ if __name__ == "__main__":
     ctx()                                   # train / load the forecaster once before forking workers
     with ProcessPoolExecutor(max_workers=workers) as ex:
         res = list(ex.map(run, days))
-    (outdir / "june_days.json").write_text(json.dumps(res))
+    (outdir / "june_days.json").write_text(json.dumps(res), encoding="utf-8")
     print("wrote", outdir / "june_days.json", len(res), "days")

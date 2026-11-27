@@ -117,7 +117,7 @@ def _lp_admm(campus, models, ints, cfg: ACfg, z0, u0, trace: list | None = None)
 def plan_hour(campus: Campus, models: list[LocalModel], cfg: ACfg, warm: dict, hook=None, trace: dict | None = None) -> tuple[list, dict]:
     """Coordinate the buildings for one decision; returns each building's final solution x and stats."""
     n, H, F = len(models), models[0].H, campus.step_kw
-    st = {"rounds": 0, "converged": False, "mip_solves": 0, "mip_nodes": 0, "mip_timelimit": 0, "messages": 0}
+    st = {"rounds": 0, "converged": False, "mip_solves": 0, "mip_nodes": 0, "mip_timelimit": 0, "dg_guard_used": 0, "messages": 0}
     if not cfg.share or warm.get("_isolated"):                         # each building alone, cables idle
         out = []
         for m in models:
@@ -142,7 +142,7 @@ def plan_hour(campus: Campus, models: list[LocalModel], cfg: ACfg, warm: dict, h
                 for k, (l, _) in enumerate(m.inc):
                     c[m.fcols[k]] += rho * (u[(i, l)] - z[l])
                     c[m.col[f"q{k}"]] += rho / 2
-                s = m.solve(c); st["mip_solves"] += 1; st["mip_nodes"] += s["nodes"]; st["mip_timelimit"] += "TimeLimit" in s["status"]
+                s = m.solve(c); st["mip_solves"] += 1; st["mip_nodes"] += s["nodes"]; st["mip_timelimit"] += "TimeLimit" in s["status"]; st["dg_guard_used"] += bool(s.get("dg_guard") and "kept (cheaper)" in s["dg_guard"])
                 fx.append(m.flows(s["x"]))
             gap = 0.0
             for l, (a, c_) in enumerate(campus.lines):
@@ -180,7 +180,7 @@ def plan_hour(campus: Campus, models: list[LocalModel], cfg: ACfg, warm: dict, h
                 c[m.fcols[k]] += lam[(i, l)]
             if hook is not None and r == 0:
                 hook(i, m, c)                              # quantum-placement experiment taps the commitment MILP
-            s = m.solve(c); st["mip_solves"] += 1; st["mip_nodes"] += s["nodes"]; st["mip_timelimit"] += "TimeLimit" in s["status"]
+            s = m.solve(c); st["mip_solves"] += 1; st["mip_nodes"] += s["nodes"]; st["mip_timelimit"] += "TimeLimit" in s["status"]; st["dg_guard_used"] += bool(s.get("dg_guard") and "kept (cheaper)" in s["dg_guard"])
             ints.append(s["x"])
         tr = [] if trace is not None else None
         z, u, it, conv = _lp_admm(campus, models, ints, cfg, z, u, trace=tr)
@@ -267,7 +267,7 @@ def run_day(campus: Campus, yd, day: str, outage, cfg: ACfg, forecaster=None, ho
             noncrit = np.maximum(wd.load[i] - wd.crit[i], 0)
             ctg.append(CostToGo(b.battery, wd.load[i] - wd.pv[i], wd.pi, wd.pe, wd.term_value, wd.grid, noncrit, *voll))
     warm: dict = {}
-    stats = {"rounds": [], "converged": [], "mip_solves": 0, "mip_nodes": 0, "mip_timelimit": 0, "plan_time_s": []}
+    stats = {"rounds": [], "converged": [], "mip_solves": 0, "mip_nodes": 0, "mip_timelimit": 0, "dg_guard_used": 0, "plan_time_s": []}
     for t0 in range(0, T, cfg.replan):
         tp = time.perf_counter()
         w = src.window(d0, t0, cfg.H, outage)
@@ -292,6 +292,7 @@ def run_day(campus: Campus, yd, day: str, outage, cfg: ACfg, forecaster=None, ho
                            trace=trace if (trace is not None and t0 == trace_slot) else None)
         stats["rounds"].append(st["rounds"]); stats["converged"].append(st["converged"])
         stats["mip_solves"] += st["mip_solves"]; stats["mip_nodes"] += st["mip_nodes"]; stats["mip_timelimit"] += st["mip_timelimit"]
+        stats["dg_guard_used"] += st.get("dg_guard_used", 0)
         stats["messages"] = stats.get("messages", 0) + st.get("messages", 0)
         stats["plan_time_s"].append(time.perf_counter() - tp)
         # ---- apply the first hour with actual data through the safety layer
@@ -342,7 +343,7 @@ def run_day(campus: Campus, yd, day: str, outage, cfg: ACfg, forecaster=None, ho
         for j in b.flex:
             sched.flex_start[i].setdefault(j.name, j.default)
     stats = {"admm_rounds_mean": float(np.mean(stats["rounds"])), "admm_converged_rate": float(np.mean(stats["converged"])),
-             "mip_solves": stats["mip_solves"], "mip_nodes": stats["mip_nodes"], "mip_timelimit": stats["mip_timelimit"],
+             "mip_solves": stats["mip_solves"], "mip_nodes": stats["mip_nodes"], "mip_timelimit": stats["mip_timelimit"], "dg_guard_used": stats["dg_guard_used"],
              "plan_time_s": float(np.mean(stats["plan_time_s"])), "runtime_s": float(np.sum(stats["plan_time_s"])),
              "messages": stats.get("messages", 0), "fallback_slots": stats.get("fallback_slots", 0)}
     return sched, stats

@@ -56,16 +56,16 @@ def values() -> dict:
                   "replan_time_s", "admm_convergence_rate", "qaoa_p_opt", "cost_rs_semester", "co2_t_year", "self_consumption_pct"):
             if k in r and not pd.isna(r[k]):
                 v[f"{r.method}.{r.day_set}.{r.price_scenario}.{k}"] = float(r[k])
-    h = json.loads((ROOT / "results" / "headline.json").read_text())
+    h = json.loads((ROOT / "results" / "headline.json").read_text(encoding="utf-8"))
     for side in ("before", "after", "optimum_B4"):
         for k, x in h[side].items():
             v[f"headline.{side}.{k}"] = x
-    eco = json.loads((ROOT / "results" / "economics.json").read_text())
+    eco = json.loads((ROOT / "results" / "economics.json").read_text(encoding="utf-8"))
     for sc_, e in eco.items():
         for k, x in e.items():
             if isinstance(x, (int, float)) or x is None:
                 v[f"eco.{sc_}.{k}"] = x
-    ss = json.loads((ROOT / "results" / "search_space.json").read_text())
+    ss = json.loads((ROOT / "results" / "search_space.json").read_text(encoding="utf-8"))
     v["search.N"] = ss["centralised_full_day"]["N_binary"]
     v["search.log10"] = ss["centralised_full_day"]["log10_states"]
     v["search.max_qubits"] = max(ss["local_qubo_qubits"].values())
@@ -88,7 +88,7 @@ def values() -> dict:
         v[f"scaling.p{p}.nmax.p_opt"] = float(t.loc[(nmax, p)])
     v["scaling.nmax"] = nmax
     v["scaling.uniform_nmax"] = 2.0 ** -nmax
-    meta = json.loads((ROOT / "data" / "processed" / "meta.json").read_text())
+    meta = json.loads((ROOT / "data" / "processed" / "meta.json").read_text(encoding="utf-8"))
     v["price_A_status"] = meta["prices"]["A"]["status"]
     v["price_B_status"] = meta["prices"]["B"]["status"]
     v.update(values_v2())
@@ -101,12 +101,12 @@ def values_v3() -> dict:
     v = {}
     qp = ROOT / "results" / "quantum_placement" / "summary.json"
     if qp.exists():
-        for k, x in json.loads(qp.read_text()).items():
+        for k, x in json.loads(qp.read_text(encoding="utf-8")).items():
             if isinstance(x, (int, float)) and x is not None:
                 v[f"q3.qp.{k}"] = float(x)
     sv = ROOT / "results" / "ablation" / "shapley.json"
     if sv.exists():
-        for metric, d in json.loads(sv.read_text()).items():
+        for metric, d in json.loads(sv.read_text(encoding="utf-8")).items():
             for f, x in d.items():
                 v[f"q3.shap.{metric}.{f}"] = float(x)
     ab = ROOT / "results" / "ablation" / "ablation_summary.csv"
@@ -128,7 +128,7 @@ def values_v3() -> dict:
         v["q3.b.n_datasets"] = float(b.dataset.nunique())
     rb = ROOT / "results" / "replay" / "bench_v3.json"
     if rb.exists():
-        h = json.loads(rb.read_text())["headline"]
+        h = json.loads(rb.read_text(encoding="utf-8"))["headline"]
         v["q3.headline"] = h["text"] + " " + h["detail"]
         st = h.get("story") or {}
         if st:
@@ -149,7 +149,7 @@ def values_v3() -> dict:
         v["q3.best_on_n"] = float(len(h.get("best_on", []))); v["q3.n_campuses"] = float(h.get("n", 0))
     im = ROOT / "results" / "impact" / "impact.json"
     if im.exists():
-        m = json.loads(im.read_text())
+        m = json.loads(im.read_text(encoding="utf-8"))
         c = m["central"]
         for k, x in c.items():
             if isinstance(x, (int, float)):
@@ -166,7 +166,7 @@ def values_v3() -> dict:
             v["imp.var.downtime_h"] = vv["critical_downtime_h"]; v["imp.var.wear"] = vv["wear_rs_per_kwh_in_objective"]
     lv = ROOT / "results" / "replay" / "live.json"
     if lv.exists():
-        L = json.loads(lv.read_text())
+        L = json.loads(lv.read_text(encoding="utf-8"))
         rm = L["remove"].get("heavy_labs")
         if rm:
             v["live.remove.rounds_after"] = float(rm["after"]["admm_rounds"]); v["live.remove.rounds_before"] = float(rm["before"]["admm_rounds"])
@@ -239,7 +239,7 @@ def values_v2() -> dict:
             v[f"v2.fc.max.{k}"] = float(f_[k].max())
     hw = d / "hardware.json"
     if hw.exists():
-        hj = json.loads(hw.read_text())
+        hj = json.loads(hw.read_text(encoding="utf-8"))
         v["v2.hw.ibm_status"] = hj["ibm"]["status"]
         v["v2.hw.dwave_status"] = hj["dwave"].get("dwave", "")
         v["v2.hw.campus_n"] = hj["dwave"].get("n_binaries")
@@ -249,10 +249,10 @@ def values_v2() -> dict:
             v["v2.hw.aer_found_opt_pct"] = 100 * float(np.mean([r["aer_found_opt"] for r in rows]))
             v["v2.hw.n_blocks"] = len(rows)
     import yaml
-    cfg = yaml.safe_load((ROOT / "config.yaml").read_text())
+    cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
     v["v2.tariff_status"] = cfg["tariff_v2"]["status"]
     from qgrid import data as qdata
-    meta = json.loads((ROOT / "data" / "processed" / "meta.json").read_text())
+    meta = json.loads((ROOT / "data" / "processed" / "meta.json").read_text(encoding="utf-8"))
     v["v2.demand_rate_month"] = qdata.demand_rate_month(cfg, meta["days"]["scenarios"][cfg["headline_scenario"]]["date"])  # headline day
     return v
 
@@ -293,7 +293,7 @@ def write_results_v2(v: dict):
         return
     s = pd.read_csv(d / "benchmark_v2_summary.csv")
     b = pd.read_csv(d / "benchmark_v2.csv")
-    meta = json.loads((ROOT / "data" / "processed" / "meta.json").read_text())
+    meta = json.loads((ROOT / "data" / "processed" / "meta.json").read_text(encoding="utf-8"))
     out = [f"# Results — hybrid Benders design (an earlier design step; computed on the previous template load profiles)\n\n> {QUANTUM_LABEL}. "
            "† QIEA = quantum-inspired evolutionary algorithm, classical CPU — not quantum computing.\n",
            "_Generated by `scripts/write_results_md.py` from `results/v2/*.csv` (produced by `scripts/run_benchmark_v2.py`); "
@@ -341,7 +341,7 @@ def write_results_v2(v: dict):
                    "and smooth, so real rooftop forecasting error would be larger.\n")
     hw = d / "hardware.json"
     if hw.exists():
-        hj = json.loads(hw.read_text())
+        hj = json.loads(hw.read_text(encoding="utf-8"))
         out.append("## Real quantum hardware (optional, experimental)\n")
         out.append(f"- IBM Quantum: {hj['ibm']['status']}. Qiskit Aer on the same {len(hj['ibm']['rows'])} recorded master blocks: "
                    f"best measured assignment = exact optimum in {sum(r['aer_found_opt'] for r in hj['ibm']['rows'])} of {len(hj['ibm']['rows'])}.")
@@ -349,7 +349,7 @@ def write_results_v2(v: dict):
         out.append(f"- D-Wave Leap: {dw.get('dwave')}. Whole-campus 24 h commitment QUBO: {dw.get('n_binaries')} binaries; simulated "
                    f"annealing {dw.get('sa_gap_pct', float('nan')):.2f} % from the exact MILP masters.")
         out.append("\nHardware results, when run, are noisy and are shown next to simulator and exact results.\n")
-    (ROOT / "docs" / "results_v2.md").write_text("\n".join(out))
+    (ROOT / "docs" / "results_v2.md").write_text("\n".join(out), encoding="utf-8")
 
 
 def render(text: str, v: dict) -> str:
@@ -367,7 +367,7 @@ def render(text: str, v: dict) -> str:
 
 def main():
     s = pd.read_csv(ROOT / "results" / "benchmark_summary.csv")
-    meta = json.loads((ROOT / "data" / "processed" / "meta.json").read_text())
+    meta = json.loads((ROOT / "data" / "processed" / "meta.json").read_text(encoding="utf-8"))
     st = meta["data_status"]
     pend = [f"{k}: {x}" for k, x in st.items() if x != "REAL"]
     out = [f"# Results (RVCE campus model)\n\n> {QUANTUM_LABEL}. † QIEA = quantum-inspired evolutionary algorithm, classical CPU — not quantum computing.\n",
@@ -392,15 +392,15 @@ def main():
     v = values()
     tmpl = (ROOT / "docs" / "templates" / "results_tail.md")
     if tmpl.exists():
-        out.append(render(tmpl.read_text(), v))
-    (ROOT / "docs" / "results.md").write_text("\n".join(out))
+        out.append(render(tmpl.read_text(encoding="utf-8"), v))
+    (ROOT / "docs" / "results.md").write_text("\n".join(out), encoding="utf-8")
     for t in (ROOT / "docs" / "templates").glob("*.md"):
         if t.name == "results_tail.md":
             continue
         dest = ROOT / ("README.md" if t.name == "README.md" else f"docs/{t.name}")
-        dest.write_text(render(t.read_text(), v))
+        dest.write_text(render(t.read_text(encoding="utf-8"), v), encoding="utf-8")
     write_results_v2(v)
-    missing = sum(p.read_text().count("⟨missing") for p in [ROOT / "README.md", *(ROOT / "docs").glob("*.md")])
+    missing = sum(p.read_text(encoding="utf-8").count("⟨missing") for p in [ROOT / "README.md", *(ROOT / "docs").glob("*.md")])
     print(f"wrote docs/results.md and rendered templates ({missing} missing placeholders)")
 
 

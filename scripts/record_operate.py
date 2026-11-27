@@ -2,7 +2,7 @@
 
   python scripts/record_operate.py [--day=2023-06-15]   -> results/replay/operate_session.json (+ frontend/public/replay)
 
-Historical day (actual solar from NASA POWER, the plan uses the solar forecast; BDG2-derived loads; stand-in tariff), with
+Historical day (actual solar from NASA POWER, the plan uses the solar forecast; BDG2-derived loads; tariff as labelled by the data status), with
 scripted operator actions so every Operate screen has something to show: a rule at 07:00, a manual override at 11:00,
 a campus network failure at 13:00 for 45 min and a BESCOM outage at 18:00 for 3 h. Frames every 5 simulated minutes."""
 from __future__ import annotations
@@ -60,7 +60,7 @@ def main(day: str):
            "series": final["series"], "events": s.events, "audit": s.audit, "report": rep, "lines": final["lines"]}
     js = json.dumps(out, separators=(",", ":"), default=lambda o: o.item() if hasattr(o, "item") else str(o))
     p = ROOT / "results" / "replay" / "operate_session.json"
-    p.write_text(js)
+    p.write_text(js, encoding="utf-8")
     shutil.copy(p, ROOT / "frontend" / "public" / "replay" / "operate_session.json")
     print(f"wrote {p} ({len(js) / 1e6:.1f} MB), saving vs status quo Rs {rep['saving_rs']:,.0f}, {time.time() - t0:.0f} s")
 

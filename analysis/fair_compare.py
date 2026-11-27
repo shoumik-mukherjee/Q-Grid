@@ -95,5 +95,5 @@ with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
                            for i in range(campus.n) for k, v in sq.flex_start[i].items() if v != s0.flex_start[i].get(k)]
         res[label] = r
         print(label, "done", flush=True)
-(SCR / "fair_compare.json").write_text(json.dumps(res, indent=1))
+(SCR / "fair_compare.json").write_text(json.dumps(res, indent=1), encoding="utf-8")
 print("wrote")

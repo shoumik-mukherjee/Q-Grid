@@ -25,7 +25,7 @@ def sha(p: Path):
 
 def main():
     import yaml
-    cfg = yaml.safe_load((ROOT / "config.yaml").read_text())
+    cfg = yaml.safe_load((ROOT / "config.yaml").read_text(encoding="utf-8"))
     b = pd.read_csv(ROOT / "results" / "benchmark.csv")
     hs = cfg["headline_scenario"]
     checks = []
@@ -41,9 +41,9 @@ def main():
            "packages": {p: md.version(p) for p in PKGS if _has(p)},
            "seeds": {"qaoa": cfg["qaoa"]["seed"], "ga_pso": 1, "c_qiea": 7, "kmeans": 0},
            "files": {f: sha(ROOT / f) for f in FILES},
-           "runtime": json.loads(run_info.read_text()) if run_info.exists() else None,
+           "runtime": json.loads(run_info.read_text(encoding="utf-8")) if run_info.exists() else None,
            "headline_checks": checks}
-    (ROOT / "results" / "manifest.json").write_text(json.dumps(man, indent=2))
+    (ROOT / "results" / "manifest.json").write_text(json.dumps(man, indent=2), encoding="utf-8")
     print(f"manifest: {len(checks)} headline checks, commit {man['git_commit'][:10]}")
 
 

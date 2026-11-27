@@ -43,7 +43,7 @@ def fetch_nasa(year: int) -> Path:
     params = data["properties"]["parameter"]
     assert {"ALLSKY_SFC_SW_DWN", "T2M"} <= set(params), params.keys()
     data["_qgrid_fetch"] = {"url": url, "fetched_utc": dt.datetime.now(dt.UTC).isoformat()}
-    out.write_text(json.dumps(data))
+    out.write_text(json.dumps(data), encoding="utf-8")
     print(f"[nasa]    saved {out.relative_to(ROOT)} ({len(params['T2M'])} hours)")
     return out
 
@@ -64,7 +64,7 @@ def fetch_nasa_clearsky(year: int) -> Path:
     data = r.json()
     assert "CLRSKY_SFC_SW_DWN" in data["properties"]["parameter"]
     data["_qgrid_fetch"] = {"url": url, "fetched_utc": dt.datetime.now(dt.UTC).isoformat()}
-    out.write_text(json.dumps(data))
+    out.write_text(json.dumps(data), encoding="utf-8")
     print(f"[nasa-cs] saved {out.relative_to(ROOT)}")
     return out
 
@@ -89,7 +89,7 @@ def fetch_nasa_site(name: str, lat: float, lon: float, year: int) -> Path:
     data = r.json()
     assert {"ALLSKY_SFC_SW_DWN", "CLRSKY_SFC_SW_DWN", "T2M"} <= set(data["properties"]["parameter"])
     data["_qgrid_fetch"] = {"url": url, "fetched_utc": dt.datetime.now(dt.UTC).isoformat()}
-    out.write_text(json.dumps(data))
+    out.write_text(json.dumps(data), encoding="utf-8")
     return out
 
 

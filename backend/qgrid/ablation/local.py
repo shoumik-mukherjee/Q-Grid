@@ -234,13 +234,20 @@ class LocalModel:
         if fix_flows is not None:
             for cols, v in zip(self.fcols, fix_flows):
                 lb[cols] = ub[cols] = v
-        h.changeColsBounds(self.ncol, np.arange(self.ncol, dtype=np.int32), lb, ub)
         kind = [highspy.HighsVarType.kContinuous if (relax or fix_int is not None) or not t else highspy.HighsVarType.kInteger
                 for t in integ]
         h.changeColsIntegrality(self.ncol, np.arange(self.ncol, dtype=np.int32), np.array(kind))
+        is_lp = relax or fix_int is not None or not self.integ.any()
+        res = self._run(h, lb, ub, start, is_lp)
+        res["dg_guard"] = None
+        if not is_lp and "TimeLimit" in res["status"] and "on" in self.col:
+            res = self._dg_off_guard(h, lb, ub, res)
+        return res
+
+    def _run(self, h, lb, ub, start, is_lp: bool, raise_on_fail: bool = True) -> dict | None:
+        h.changeColsBounds(self.ncol, np.arange(self.ncol, dtype=np.int32), lb, ub)
         if start is not None:
             sol = highspy.HighsSolution(); sol.col_value = list(start); h.setSolution(sol)
-        is_lp = relax or fix_int is not None or not self.integ.any()
         h.setOptionValue("time_limit", 60.0 if is_lp else self.time_limit)    # the B&B budget is for MILPs only
         h.run()
         st = h.getModelStatus()
@@ -253,12 +260,37 @@ class LocalModel:
             ok = info.primal_solution_status == 2
             self.retries = getattr(self, "retries", 0) + 1
         if not ok:
-            raise RuntimeError(f"local model {self.b.name}: {st}")
+            if raise_on_fail:
+                raise RuntimeError(f"local model {self.b.name}: {st}")
+            return None
         s = h.getSolution()
-        x = np.array(s.col_value)
-        return {"x": x, "obj": float(info.objective_function_value), "status": str(st),
+        return {"x": np.array(s.col_value), "obj": float(info.objective_function_value), "status": str(st),
                 "bound": float(getattr(info, "mip_dual_bound", np.nan)), "nodes": int(getattr(info, "mip_node_count", 0)),
                 "row_dual": np.array(s.row_dual), "col_dual": np.array(s.col_dual)}
+
+    def _dg_off_guard(self, h, lb, ub, res: dict) -> dict:
+        """A time-limited MILP may return an incumbent with the diesel set on when it is not worth it (it costs more per
+        kWh than any grid price), and the engine would then hold it on for its minimum run time. Re-solve with every
+        diesel start fixed off (slots already forced on by a run carried over from the previous hour stay as they are),
+        seeded with the same plan repaired (diesel output moved to grid import, or to critical shedding when the grid is
+        down) so the re-solve always has a feasible incumbent, and keep the cheaper plan. The returned status is the
+        first solve's, so time-limited solves are still counted."""
+        on, pg, stc = self.col["on"], self.col["pg"], self.col["st"]
+        imp, sc = self.col["imp"], self.col["sc"]
+        lb2, ub2, x0 = lb.copy(), ub.copy(), res["x"].copy()
+        for k in range(self.H):
+            if lb[on[k]] > 0.5:                                  # minimum on-time of a running set: keep
+                continue
+            ub2[on[k]] = ub2[pg[k]] = ub2[stc[k]] = 0.0
+            d = x0[pg[k]]
+            x0[on[k]] = x0[pg[k]] = x0[stc[k]] = 0.0
+            x0[imp[k] if ub[imp[k]] > 0 else sc[k]] += d
+        alt = self._run(h, lb2, ub2, x0, False, raise_on_fail=False)
+        if alt is not None and alt["obj"] < res["obj"] - 1e-6:
+            alt["status"], alt["dg_guard"] = res["status"], "diesel-off plan kept (cheaper)"
+            return alt
+        res["dg_guard"] = "checked, original plan kept"
+        return res
 
     def get(self, x, name):
         return x[self.col[name]] if name in self.col else np.zeros(self.H)

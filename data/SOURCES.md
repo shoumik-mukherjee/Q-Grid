@@ -259,7 +259,7 @@ Diesel price 90 Rs/L, fuel curve 0.08 L/h per kW rated + 0.25 L/kWh, 2.68 kg CO2
   percentile.
 - **CU-BEMS**: Pipattanasomporn, M., Chitalia, G., Songsiri, J. et al. "CU-BEMS, smart building electricity consumption and
   indoor environmental sensor datasets." *Scientific Data* 7, 241 (2020). Files from
-  `https://github.com/SGRUdata/SGRUdata.github.io/tree/master/data` (fetched 2026-11-22):
+  `https://github.com/SGRUdata/SGRUdata.github.io/tree/master/data` (fetched 2026-11-22; re-fetched 2026-11-27 on this machine, all 7 SHA-256 below match):
   - `2019Floor1.csv.zip` SHA-256 f88d0707a4571598bc1be307cf44b6e13d5bf356b9255ed7742f8a279e272e50
   - `2019Floor2.csv.zip` SHA-256 f6a40fa250d095fe9cdb17a302b4f81a7e3f4c2bdf709460b06b242c57ab2516
   - `2019Floor3.csv.zip` SHA-256 a3b10899e070d3a32f3a1e3e8bfc2874eee81d573ddb8031b59801b39064a0c1

@@ -78,7 +78,7 @@ def export_distributions(proc, zone: str = "hostels", slot: int = 76):
             "uniform_p": 2.0 ** -lp.n, "simulator": "qiskit-aer statevector (ideal, noiseless)",
             "aer_time_s": round(t_aer, 3),
         }
-        (ROOT / "results" / "replay" / f"qaoa_{key}.json").write_text(json.dumps(rec))
+        (ROOT / "results" / "replay" / f"qaoa_{key}.json").write_text(json.dumps(rec), encoding="utf-8")
         out[key] = {"n": lp.n, "p_opt": rec["optimum"]["p_opt"], "uniform": rec["uniform_p"]}
         print(f"[dist] {key}: n={lp.n} P(opt)={rec['optimum']['p_opt']:.4f} (uniform {rec['uniform_p']:.6f})")
     return out

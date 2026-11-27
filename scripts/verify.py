@@ -17,7 +17,7 @@ sys.path[:0] = [str(ROOT / "backend"), str(ROOT)]
 
 
 def main(ci: bool = False) -> int:
-    man = json.loads((ROOT / "results" / "manifest.json").read_text())
+    man = json.loads((ROOT / "results" / "manifest.json").read_text(encoding="utf-8"))
     ok = True
     if ci:
         for f in ("config.yaml", "configs/profiles.yaml", "data/processed/campus.json", "results/benchmark.csv", "results/headline.json"):
@@ -28,7 +28,7 @@ def main(ci: bool = False) -> int:
             ok &= good
             print(f"{'PASS' if good else 'FAIL'}  sha256 {f}")
         b = pd.read_csv(ROOT / "results" / "benchmark.csv")
-        h = json.loads((ROOT / "results" / "headline.json").read_text())
+        h = json.loads((ROOT / "results" / "headline.json").read_text(encoding="utf-8"))
         for c in man["headline_checks"]:
             r = b[(b.method == c["method"]) & (b.scenario == c["scenario"]) & (b.price_scenario == c["price_scenario"])].iloc[0]
             good = abs(float(r[c["metric"]]) - c["value"]) <= max(c["abs_tol"], c["rel_tol"] * abs(c["value"]))

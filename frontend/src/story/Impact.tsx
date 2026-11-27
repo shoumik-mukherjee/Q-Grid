@@ -1,6 +1,6 @@
 // Step 7d "Is it worth it?": cost per building, payback, 10-year NPV with a Monte Carlo range, scale path.
 // Every number comes from replay/impact.json (scripts/write_impact.py); costs are labelled assumptions.
-import type { Impact } from '../lib/data'
+import { tariffIsReal, type Impact } from '../lib/data'
 import { useC } from '../lib/theme'
 
 export const lakh = (v: number) => `${v < 0 ? '−' : ''}Rs ${Math.abs(v / 1e5).toLocaleString('en-IN', { maximumFractionDigits: 1, minimumFractionDigits: 1 })} lakh`
@@ -42,7 +42,7 @@ export function ImpactBoard({ m }: { m: Impact }) {
   return (
     <div className="impactboard" role="region" aria-label="Is it worth it: NPV range and scale path">
       <div className="ib-card">
-        <div className="sc-head"><b>10-year NPV, Monte Carlo P5–P95</b><span className="muted"> · dot = median · stand-in tariff, assumed costs</span></div>
+        <div className="sc-head"><b>10-year NPV, Monte Carlo P5–P95</b><span className="muted"> · dot = median · {tariffIsReal(m.status) ? 'KERC tariff' : 'stand-in tariff'}, assumed costs</span></div>
         <svg viewBox={`0 0 ${W} ${H}`} width="100%" role="img"
           aria-label={rows.map(r => `${r.label}: median ${lakh(r.p.p50)}, 90% range ${lakh(r.p.p5)} to ${lakh(r.p.p95)}, ${Math.round(100 * r.p.prob_positive)}% chance positive`).join('. ')}>
           <line x1={x(0)} x2={x(0)} y1={8} y2={H - 18} stroke={C.text} strokeWidth={1} />

@@ -10,6 +10,7 @@ import { CommsChart, SmallMultiples } from './Scorecard'
 import { Tex } from './Tex'
 import { LiveQaoa, RemoveBuilding, RuleCard } from './Live'
 import { ImpactDetail, lakh } from './Impact'
+import { tariffIsReal } from '../lib/data'
 
 
 export type PanelProps = {
@@ -524,7 +525,7 @@ function step7(p: PanelProps, B: NonNullable<StoryData['bench']>, ds: string, pr
           : <>Is it worth it? Not yet on these assumptions: after battery wear the 10-year value is negative.</>,
         support: <p>{m.n_buildings} building nodes cost {lakh(c.hardware_rs)} (assumed). Over {m.n_days} RVCE days the bill falls by {lakh(c.bill_saving_rs_per_year)} a year; extra battery wear costs {lakh(c.battery_wear_rs_per_year)} a year, because every optimiser prices wear and cycles only when it pays.{v ? ` A design under test nets ${lakh(v.net_rs_per_year)} a year.` : ''}</p>,
         keys: <>
-          <Key label="Payback, after wear" pending="Tariff">{c.payback_net_years !== null ? `${c.payback_net_years.toFixed(1)} y` : 'none'}</Key>
+          <Key label="Payback, after wear" pending={tariffIsReal(m.status) ? undefined : 'Tariff'}>{c.payback_net_years !== null ? `${c.payback_net_years.toFixed(1)} y` : 'none'}</Key>
           <Key label="10-yr NPV, after wear" note={`P5–P95 ${lakh(m.monte_carlo.npv_net_rs.p5)} to ${lakh(m.monte_carlo.npv_net_rs.p95)}`}>{lakh(c.npv_net_rs)}</Key>
           <Key label="Chance NPV is positive" note={`${m.monte_carlo.samples.toLocaleString('en-IN')} Monte Carlo samples`}>{`${Math.round(100 * m.monte_carlo.npv_net_rs.prob_positive)}%`}</Key>
           <Key label="Net per year" note={`bill saving − maintenance − wear`}>{lakh(c.net_rs_per_year)}</Key>

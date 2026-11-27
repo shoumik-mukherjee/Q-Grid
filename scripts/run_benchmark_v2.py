@@ -1,5 +1,5 @@
 """Benchmark v2: identical data, days and constraints for every method; tariff v2 (energy ToD + demand charge
-on the campus peak kVA, PENDING stand-in rates); every schedule settled by model.settle() via settle_v2().
+on the campus peak kVA; rates and their status from config.yaml prices.A / tariff_v2); every schedule settled by model.settle() via settle_v2().
 
 Methods
   B0 B1 B2-GA B2-PSO B3      existing baselines (status quo, rule-based, GA, PSO, per-zone MILP)
@@ -169,9 +169,10 @@ def main(workers: int | None = None, only: str | None = None):
         tasks = [t for t in tasks if t in todo]
         keep = old[old["error"].isna()].drop(columns=[c for c in ("error", "gap_to_opt_pct") if c in old]).to_dict("records") \
             if "error" in old else old.to_dict("records")
-        blocks = json.loads((OUT / "qaoa_blocks.json").read_text())["blocks"] if (OUT / "qaoa_blocks.json").exists() else []
+        blocks = json.loads((OUT / "qaoa_blocks.json").read_text(encoding="utf-8"))["blocks"] if (OUT / "qaoa_blocks.json").exists() else []
     tasks.sort(key=lambda t: (t[2] not in HEAVY, t[1] == "eval"))      # longest first
-    workers = workers or max(1, (os.cpu_count() or 2) - 2)
+    from qgrid.parallel import workers as _workers
+    workers = _workers(workers)
     print(f"{len(tasks)} tasks on {workers} workers", flush=True)
     rows = list(keep)
     if only != "retry":
@@ -188,9 +189,9 @@ def main(workers: int | None = None, only: str | None = None):
                 continue
             rows.append(r["row"])
             if r["extra"].get("log"):
-                (OUT / "logs" / f"{r['key']}_{r['method']}.json").write_text(json.dumps(_clean(r["extra"]["log"])))
+                (OUT / "logs" / f"{r['key']}_{r['method']}.json").write_text(json.dumps(_clean(r["extra"]["log"])), encoding="utf-8")
             if r["extra"].get("schedule"):
-                (OUT / "schedules" / f"{r['key']}_{r['method']}.json").write_text(json.dumps(_clean(r["extra"]["schedule"])))
+                (OUT / "schedules" / f"{r['key']}_{r['method']}.json").write_text(json.dumps(_clean(r["extra"]["schedule"])), encoding="utf-8")
             blocks += r["extra"].get("blocks", [])
             print(f"[{k}/{len(tasks)}] {t[1]:12s} {t[2]:12s} {r['row']['objective_incl_demand_rs']:12,.0f} "
                   f"{r['row']['runtime_s']:7.1f}s", flush=True)
@@ -198,7 +199,7 @@ def main(workers: int | None = None, only: str | None = None):
     summarise(df)
     (OUT / "qaoa_blocks.json").write_text(json.dumps(_clean({"label": "QAOA on a local simulator: verified against exact "
                                                                        "solutions, no quantum advantage claimed",
-                                                              "blocks": blocks})))
+                                                              "blocks": blocks})), encoding="utf-8")
     # solar forecast error on the named days
     yd = YearData(campus, proc, "A", forecast=True)
     fe = pd.DataFrame([{"scenario": k, **forecast_error(yd, v["date"])} for k, v in meta["days"]["scenarios"].items()])
@@ -208,7 +209,7 @@ def main(workers: int | None = None, only: str | None = None):
     conv[["method", "scenario", "admm_converged_rate", "admm_iters_mean"]].to_csv(OUT / "convergence.csv", index=False)
     (OUT / "run_info.json").write_text(json.dumps({"runtime_s": time.time() - t_all, "workers": workers,
                                                     "tasks": len(tasks), "price_scenario": "A",
-                                                    "tariff_v2_status": campus.cfg["tariff_v2"]["status"]}))
+                                                    "tariff_v2_status": campus.cfg["tariff_v2"]["status"]}), encoding="utf-8")
     print(f"done in {time.time() - t_all:.0f} s", flush=True)
 
 

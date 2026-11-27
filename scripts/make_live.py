@@ -49,7 +49,7 @@ def main():
         out["rules"].append(r)
         print(f"rule '{t}': ok={[x['ok'] for x in r['results']]} {r['time_s']:.1f} s", flush=True)
     rp = ROOT / "results" / "replay" / "live.json"
-    rp.write_text(json.dumps(out, default=lambda o: o.item() if hasattr(o, "item") else str(o)))
+    rp.write_text(json.dumps(out, default=lambda o: o.item() if hasattr(o, "item") else str(o)), encoding="utf-8")
     shutil.copy(rp, ROOT / "frontend" / "public" / "replay" / "live.json")
     print(f"wrote {rp} in {time.time() - t0:.0f} s")
 

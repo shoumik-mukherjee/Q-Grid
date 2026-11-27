@@ -129,8 +129,8 @@ def report():
     g.to_csv(OUT / "ablation_summary.csv")
     means = g.to_dict(orient="index")
     sv = {m: shapley({k: v for k, v in means.items()}, m) for m in ("gap_pct", "critical_downtime_h", "peak_kva", "import_kwh")}
-    json.dump(sv, open(OUT / "shapley.json", "w"), indent=1)
-    fe = json.load(open(OUT / "forecast_mae.json")) if (OUT / "forecast_mae.json").exists() else {}
+    json.dump(sv, open(OUT / "shapley.json", "w", encoding="utf-8"), indent=1)
+    fe = json.load(open(OUT / "forecast_mae.json", encoding="utf-8")) if (OUT / "forecast_mae.json").exists() else {}
     # waterfall: start at 0000, add each factor's Shapley contribution, end at 1111
     import matplotlib
     matplotlib.use("Agg")
@@ -224,7 +224,7 @@ def _write_md(g, sv, fe, bd, stress=None):
               "- 30 days, not 365 (the full year will be run when RVCE data is available); one price scenario (stand-in).",
               "- Loads are BDG2 shapes scaled by floor area × EPI (PENDING RVCE meters); see data/SOURCES.md.",
               "- Discrete-dispatch combinations hit the branch-and-bound time limit more often; their gap includes that."]
-    (ROOT / "docs" / "ablation.md").write_text("\n".join(lines) + "\n")
+    (ROOT / "docs" / "ablation.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("wrote docs/ablation.md")
 
 
@@ -301,7 +301,7 @@ city-feeder setting with many more buildings than cable-slot constraints.)
   plans; binary ADMM (without C) agreed within its 6 rounds in {100 * c0.admm_converged_rate.mean():.0f} % (it then rounds and fixes
   the consensus).
 """
-    (ROOT / "docs" / "math.md").write_text(txt)
+    (ROOT / "docs" / "math.md").write_text(txt, encoding="utf-8")
     print("wrote docs/math.md")
 
 
@@ -312,7 +312,7 @@ def main(workers: int, ndays: int | None):
     OUT.mkdir(parents=True, exist_ok=True)
     fc = _forecaster()                                     # trains and caches once before the workers start
     from qgrid.ablation.forecast import forecast_errors
-    json.dump(forecast_errors(fc, days), open(OUT / "forecast_mae.json", "w"), indent=1)
+    json.dump(forecast_errors(fc, days), open(OUT / "forecast_mae.json", "w", encoding="utf-8"), indent=1)
     heavy = lambda code: (code[0] == "1") * (2 if code[2] == "0" else 1) * (2 if code[1] == "0" else 1)   # noqa: E731
     hs = meta["days"]["scenarios"][c["campus"].cfg["headline_scenario"]]
     stress = [(hs["date"], hs["outage"])]                 # outage stress day, reported separately
@@ -347,7 +347,7 @@ def main(workers: int, ndays: int | None):
     pd.DataFrame(rows).to_csv(OUT / "ablation.csv", index=False)
     pd.DataFrame(bounds).to_csv(OUT / "bounds.csv", index=False)
     json.dump({"runtime_s": time.time() - t_all, "workers": workers, "days": len(days), "combos": len(COMBOS)},
-              open(OUT / "run_info.json", "w"))
+              open(OUT / "run_info.json", "w", encoding="utf-8"))
     report()
 
 
@@ -357,6 +357,7 @@ if __name__ == "__main__":
     if "--report" in sys.argv:
         report()
     else:
-        w = next((int(a.split("=")[1]) for a in sys.argv if a.startswith("--workers=")), max(1, (os.cpu_count() or 2) - 2))
+        from qgrid.parallel import workers as _workers
+        w = _workers(next((int(a.split("=")[1]) for a in sys.argv if a.startswith("--workers=")), None))
         nd = next((int(a.split("=")[1]) for a in sys.argv if a.startswith("--days=")), None)
         main(w, nd)

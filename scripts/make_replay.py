@@ -89,7 +89,7 @@ def build_scenario(key: str) -> dict:
     reset_stats()
     s_q, st = run_day(campus, day, method="qaoa", log=True, explain_slots=set(range(0, 96, 4)))
     m_q = settle(campus, day, s_q)
-    sq = json.loads(sched_file.read_text())["B0"] if sched_file.exists() else None
+    sq = json.loads(sched_file.read_text(encoding="utf-8"))["B0"] if sched_file.exists() else None
     bench_ours = rows[(rows.method == "OURS") & (rows.price_scenario == "A")]
     consistent = bool(len(bench_ours) and abs(float(bench_ours.cost_rs.iloc[0]) - m_q["cost_rs"]) < 1e-3)
 
@@ -163,7 +163,7 @@ def build_scenario(key: str) -> dict:
     v2s = ROOT / "results" / "v2" / "schedules" / f"{key}_V2-QAOA.json"
     if v2s.exists():
         from qgrid.v2.tariff import settle_v2
-        j = json.loads(v2s.read_text())
+        j = json.loads(v2s.read_text(encoding="utf-8"))
         sch2 = Schedule(np.asarray(j["p_bat"], float), [dict(x) for x in j["flex_start"]], np.asarray(j["flows"], float),
                         np.asarray(j["dg_kw"], float), np.asarray(j["pump_on"], float))
         m2 = settle_v2(campus, day, sch2)
@@ -206,7 +206,7 @@ def build_scenario(key: str) -> dict:
     }
     if key == campus.cfg["headline_scenario"]:
         hj = ROOT / "results" / "headline.json"
-        out["headline"] = json.loads(hj.read_text()) if hj.exists() else None
+        out["headline"] = json.loads(hj.read_text(encoding="utf-8")) if hj.exists() else None
     # worked examples (QAOA measured with Qiskit Aer + exact check) for every scenario, so each day in the demo's
     # scenario picker shows pipeline results
     if True:
@@ -291,7 +291,7 @@ def attach_qgrid(campus, meta, outs: dict) -> None:
     hold = meta["days"]["eval_days"] + [v["date"] for v in meta["days"]["scenarios"].values()]
     fc = GBMForecaster(campus, proc, yd, hold, cache=ROOT / "results" / "bench_v3" / "gbm_rvce.pkl")
     qp = ROOT / "results" / "quantum_placement" / "summary.json"
-    placement = json.loads(qp.read_text()) if qp.exists() else {}
+    placement = json.loads(qp.read_text(encoding="utf-8")) if qp.exists() else {}
     hs = campus.cfg["headline_scenario"]
     for k, o in outs.items():
         sc = meta["days"]["scenarios"][k]
@@ -371,7 +371,7 @@ def attach_v2(campus, meta, outs: dict) -> None:
         proc = qdata.load_processed()
         yd = YearData(campus, proc, "A", forecast=False)
         with np.errstate(divide="ignore", over="ignore", invalid="ignore"):
-            ex = explain_slot(campus, yd, sc["date"], sc.get("outage"), json.loads(sched.read_text()), t0=72,
+            ex = explain_slot(campus, yd, sc["date"], sc.get("outage"), json.loads(sched.read_text(encoding="utf-8")), t0=72,
                               zone="pumping_station", kind="pump")
         outs[hs]["v2"]["example"] = ex
         print(f"v2 worked example: {ex['time']}, {len(ex['benders'])} Benders iterations, "
@@ -400,7 +400,7 @@ def main():
     attach_qgrid(campus, meta, outs)
     for k, o in outs.items():
         o["provenance"] = prov
-        (RDIR / f"scenario_{k}.json").write_text(dump(o))
+        (RDIR / f"scenario_{k}.json").write_text(dump(o), encoding="utf-8")
         index["scenarios"].append({"key": k, "date": o["scenario"]["date"], "note": o["scenario"]["note"],
                                    "replay_matches_benchmark": o["replay_matches_benchmark"]})
         print(f"{k}: replay matches benchmark: {o['replay_matches_benchmark']}")
@@ -425,13 +425,13 @@ def main():
           "scenario": hs, "cases": {}}
     for name, params in cases.items():
         sb["cases"][name] = whatif(WhatIf(**{"scenario": hs, **params}))
-    (RDIR / "sandbox.json").write_text(dump(sb))
-    (RDIR / "rules.json").write_text(dump([r.model_dump() for r in load_rules(campus)]))
+    (RDIR / "sandbox.json").write_text(dump(sb), encoding="utf-8")
+    (RDIR / "rules.json").write_text(dump([r.model_dump() for r in load_rules(campus)]), encoding="utf-8")
     index["files"] += ["sandbox.json", "rules.json"]
-    (RDIR / "index.json").write_text(dump(index))
+    (RDIR / "index.json").write_text(dump(index), encoding="utf-8")
     PUB.mkdir(parents=True, exist_ok=True)
     for p in RDIR.glob("*.json"):   # validate every replay file is strict JSON before publishing
-        json.loads(p.read_text(), parse_constant=lambda c: (_ for _ in ()).throw(ValueError(f"{p.name}: {c}")))
+        json.loads(p.read_text(encoding="utf-8"), parse_constant=lambda c: (_ for _ in ()).throw(ValueError(f"{p.name}: {c}")))
     for p in RDIR.glob("*"):
         if p.suffix in (".json", ".csv"):
             shutil.copy(p, PUB / p.name)

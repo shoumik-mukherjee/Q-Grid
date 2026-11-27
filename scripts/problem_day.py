@@ -55,7 +55,7 @@ def main():
              "timetable / Ausgrid shapes). Capacities are ASSUMPTIONS (config.yaml).", fontsize=7, alpha=.75)
     fig.tight_layout(rect=(0, 0.03, 1, 1))
     fig.savefig(ROOT / "results" / "plots" / "problem_day.png", dpi=130)
-    (ROOT / "results" / "problem_day.json").write_text(json.dumps(out, indent=2))
+    (ROOT / "results" / "problem_day.json").write_text(json.dumps(out, indent=2), encoding="utf-8")
     print(json.dumps(out["scenarios"], indent=1))
 
 
