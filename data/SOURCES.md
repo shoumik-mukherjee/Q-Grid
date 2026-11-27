@@ -98,11 +98,17 @@ Tariff Order 2022 (FY2022-23), later days Tariff Order 2023 (FY2023-24). Both or
 meter-reading date on or after 1 April; the switch is modelled on the calendar date (ASSUMPTION: RVCE's meter-reading
 date is unknown).
 Page refs "pN (printed M)": N = page of the merged PDF, M = page number printed on the order.
-- **RVCE's category — HT-2(c)(ii), sourced:** RVCE is a self-financing (private unaided) college run by Rashtreeya
-  Sikshana Samithi Trust (RSST), a not-for-profit trust, per RVCE's NAAC Self Study Report "Final submitted SSR_28 June
-  2024" (`https://rvce.edu.in/sites/default/files/Final%20submitted%20SSR_28%20June%202024_latest.pdf`).
-  **Verification pending:** rvce.edu.in returned HTTP 404/403 to scripted downloads on 2026-11-27, so the statement has
-  not been read and quoted from the PDF here; save a copy as `data/raw/rvce/RVCE_SSR_2024.pdf` and add the page.
+- **RVCE's category — HT-2(c)(ii), sourced:** RVCE NAAC Self Study Report, "Final submitted SSR_28 June 2024"
+  (`https://rvce.edu.in/sites/default/files/Final%20submitted%20SSR_28%20June%202024_latest.pdf`; rvce.edu.in refuses
+  scripted downloads, so the PDF was saved by hand on 2026-11-27) → `data/raw/rvce/Final-submitted-SSR_28-June-2024_latest.pdf`
+  (124 pages, 538,066 bytes, SHA-256 `01a3125406d4360b0881c61f2fb4eb20ac539b9f2c88fae990cbee7240f3f787`; page footers
+  read "Page N/124", so PDF page = printed page).
+  - p2: "RV College of Engineering (RVCE) is a flagship institution under the Trust, established in 1963 is one of the
+    earliest self-financing engineering colleges in the country. The institution is run by RSST, a not-for-profit
+    Trust. RVCE is an Autonomous college." RSST = "Rashtreeya Shikshana Samithi Trust (RSST), founded in the year 1940" (p2).
+  - p11 (2.1 Basic information): "Status of the Institution — Self Financing".
+  - Self-financing means RVCE is not a Government, local-body or aided institution (and it is a college, not a
+    university), so HT-2(c)(i) does not apply and the category is HT-2(c)(ii).
 - **ASSUMPTION pending RVCE's BESCOM bill — single connection:** the whole campus, including hostels, is on one HT
   connection billed under HT-2(c)(ii). Hostels on a separate connection would fall under HT-2(c)(i) ("Hostels of all
   Educational Institutions"; TO2023 Rs 300/kVA, 750 paise, p215 and p382).

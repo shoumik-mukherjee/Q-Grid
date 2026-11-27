@@ -175,10 +175,11 @@ prices:
     standin_note: "(not used: status REAL; the earlier stand-in was 8.00 Rs/kWh, +1.00 06-10 h & 18-22 h, -1.00 22-06 h, export 3.00)"
     category: >-
       HT-2(c)(ii) "Hospitals and Educational Institutions other than those covered under HT-2(c)(i)" (TO2023 p213
-      printed 204, p382 printed 373; TO2022 p222 printed 213, p421 printed 412). RVCE is a self-financing (private
-      unaided) college run by Rashtreeya Sikshana Samithi Trust (RSST), a not-for-profit trust: RVCE NAAC Self Study
-      Report, "Final submitted SSR_28 June 2024" (rvce.edu.in; VERIFICATION PENDING: the PDF returns HTTP 403 to
-      scripted downloads and has not been read here, see data/SOURCES.md).
+      printed 204, p382 printed 373; TO2022 p222 printed 213, p421 printed 412). SOURCED: RVCE is self-financing, not
+      a Government, local-body or aided institution and not a university, so it is outside HT-2(c)(i). RVCE NAAC Self
+      Study Report 2024, data/raw/rvce/Final-submitted-SSR_28-June-2024_latest.pdf: p2 "one of the earliest self-financing engineering colleges in the country. The
+      institution is run by RSST, a not-for-profit Trust. RVCE is an Autonomous college" (RSST = "Rashtreeya Shikshana
+      Samithi Trust", p2); p11 basic information "Status of the Institution: Self Financing".
     connection_assumption: >-
       ASSUMPTION pending RVCE's BESCOM bill: the whole campus, including hostels, is on a single HT connection billed
       under HT-2(c)(ii). Hostels on a separate connection would fall under HT-2(c)(i) ("Hostels of all Educational
