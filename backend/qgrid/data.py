@@ -358,18 +358,92 @@ def iex_series(year: int) -> pd.Series | None:
     return s.interpolate(limit_direction="both") / 1000.0
 
 
-def build_prices(cfg: dict) -> tuple[pd.DataFrame, dict]:
-    """Columns A_import, A_export, B_import, B_export (Rs/kWh). Returns (prices, status)."""
+# ----------------------------------------------------------------------------- price scenario A (date-dependent tariff)
+def tariff_period(cfg: dict, day) -> dict:
+    """The price-scenario-A tariff period in force on `day`: {name, energy_slabs, tod, demand_rs_per_kva_month,
+    in_range}. Periods are [from, to) by date (config.yaml prices.A.periods). A date outside every period (the
+    benchmark sites' 2017/2019 years) gets prices.A.out_of_range_period with in_range=False. Configs without
+    `periods` (configs/v1_generic.yaml) keep the old flat keys: import_base_rs_kwh, tod, tariff_v2 demand charge."""
+    a = cfg["prices"]["A"]
+    if "periods" not in a:
+        dem = cfg.get("tariff_v2", {}).get("demand_rs_per_kva_month", 0.0)
+        return {"name": "flat", "energy_slabs": [{"rs_kwh": float(a["import_base_rs_kwh"])}], "tod": a["tod"],
+                "demand_rs_per_kva_month": float(dem), "in_range": True}
+    try:
+        d = pd.Timestamp(day).normalize()
+    except (ValueError, TypeError):           # SYNTHETIC unit-test days carry no date
+        d = None
+    for p in (a["periods"] if d is not None else []):
+        if pd.Timestamp(p["from"]) <= d < pd.Timestamp(p["to"]):
+            return {**p, "in_range": True}
+    p = next(p for p in a["periods"] if p["name"] == a["out_of_range_period"])
+    return {**p, "in_range": False}
+
+
+def demand_rate_month(cfg: dict, day) -> float:
+    """Demand charge Rs/kVA/month in force on `day` (date-dependent, see tariff_period)."""
+    return float(tariff_period(cfg, day)["demand_rs_per_kva_month"])
+
+
+def slab_energy_rate(slabs: list[dict], cum_kwh: np.ndarray, e_kwh: np.ndarray) -> np.ndarray:
+    """Rs/kWh for slots whose energy e_kwh is billed after cum_kwh already consumed in the billing month.
+    slabs = [{first_kwh_per_month: X, rs_kwh: r1}, ..., {rs_kwh: rn}] as written in the KERC schedule ("for the first
+    one lakh units ... for the balance units"). A slot straddling a slab boundary gets the energy-weighted mix of the
+    two rates, so sum(rate * e) over the month equals the slab bill exactly. e_kwh = 0 -> the marginal rate at cum_kwh."""
+    rates = np.full(len(cum_kwh), float(slabs[-1]["rs_kwh"]))
+    lo = 0.0
+    billed = np.zeros(len(cum_kwh))                   # Rs for e_kwh across the slabs
+    for s in slabs:
+        hi = lo + float(s["first_kwh_per_month"]) if "first_kwh_per_month" in s else np.inf
+        part = np.clip(np.minimum(cum_kwh + e_kwh, hi) - np.maximum(cum_kwh, lo), 0.0, None)
+        billed += part * float(s["rs_kwh"])
+        marginal = (cum_kwh >= lo) & (cum_kwh < hi)
+        rates = np.where((e_kwh <= 0) & marginal, float(s["rs_kwh"]), rates)
+        lo = hi
+    out = np.where(e_kwh > 0, billed / np.where(e_kwh > 0, e_kwh, 1.0), rates)
+    return np.round(out, 9)                            # drop float noise from the cumulative sums (< 1e-9 Rs/kWh)
+
+
+def price_a_import(idx: pd.DatetimeIndex, cfg: dict, grid_import_kw: np.ndarray | None = None) -> np.ndarray:
+    """Scenario-A import price (Rs/kWh) per slot: the energy charge of the tariff period in force on the slot's date
+    (two-slab charges use the campus's cumulative grid import in the calendar month, grid_import_kw) plus that
+    period's ToD adders."""
+    out = np.zeros(len(idx))
+    dates = idx.normalize()
+    keys = pd.Series([tariff_period(cfg, d)["name"] for d in dates.unique()], index=dates.unique())
+    pname = keys.reindex(dates).to_numpy()
+    for name in pd.unique(pname):
+        sel = pname == name
+        per = tariff_period(cfg, idx[sel][0])
+        sub = idx[sel]
+        slabs = per["energy_slabs"]
+        if len(slabs) == 1:
+            base = np.full(sel.sum(), float(slabs[0]["rs_kwh"]))
+        else:
+            if grid_import_kw is None:
+                raise ValueError(f"tariff period {name!r} has a slab energy charge: grid_import_kw is required")
+            e = np.clip(np.asarray(grid_import_kw, float)[sel], 0.0, None) * (int(cfg["site"]["slot_minutes"]) / 60.0)
+            month = sub.to_period("M")
+            cum = pd.Series(e).groupby(np.asarray(month)).cumsum().to_numpy() - e      # kWh before this slot
+            base = slab_energy_rate(slabs, cum, e)
+        out[sel] = base + tod_adder(sub, per["tod"])
+    return out
+
+
+def build_prices(cfg: dict, grid_import_kw: np.ndarray | None = None) -> tuple[pd.DataFrame, dict]:
+    """Columns A_import, A_export, B_import, B_export (Rs/kWh). Returns (prices, status).
+    grid_import_kw: campus grid import per slot, needed only for tariff periods with slab energy charges."""
     year = cfg["site"]["year"]
     idx = year_index(year)
     pc = cfg["prices"]
     status = {}
 
     a = pc["A"]
-    imp = float(a["import_base_rs_kwh"]) + tod_adder(idx, a["tod"])
+    imp = price_a_import(idx, cfg, grid_import_kw)
     out = pd.DataFrame({"A_import": imp, "A_export": float(a["export_rs_kwh"])}, index=idx)
     status["A"] = {"status": a["status"], "source": a["source"],
-                   "note": a["standin_note"] if a["status"] != "REAL" else ""}
+                   "note": a["standin_note"] if a["status"] != "REAL" else "",
+                   **({"periods": [{k: p[k] for k in ("name", "from", "to")} for p in a["periods"]]} if "periods" in a else {})}
 
     b = pc["B"]
     real = iex_series(year)
@@ -437,7 +511,10 @@ def build_all(cfg: dict | None = None) -> dict:
     loads.to_parquet(PROC / "load.parquet")
     crit.to_parquet(PROC / "crit.parquet")
     water.to_frame("m3").to_parquet(PROC / "water.parquet")
-    prices, price_status = build_prices(cfg)
+    # slab position for two-slab energy charges (FY2022-23): campus grid import without battery/DG dispatch
+    # (status-quo basis, ASSUMPTION: billing month = calendar month), see config.yaml prices.A.periods
+    sq_import = (loads.sum(axis=1) - pv.sum(axis=1)).clip(lower=0).to_numpy()
+    prices, price_status = build_prices(cfg, sq_import)
     prices.to_parquet(PROC / "price.parquet")
     co2 = load_co2_factor(cfg)
     dtypes = day_types(cfg)

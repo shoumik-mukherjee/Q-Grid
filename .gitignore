@@ -24,6 +24,7 @@ data/raw/cea/*
 !data/raw/tariff/
 data/raw/tariff/*
 !data/raw/tariff/KERC_tariff_order_BESCOM_FY2023-24.pdf
+!data/raw/tariff/KERC_tariff_order_BESCOM_FY2022-23.pdf
 !data/raw/tariff/KERC_solar_export_tariff.pdf
 data/processed/*.parquet
 !data/processed/campus.json

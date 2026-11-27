@@ -11,7 +11,7 @@ Status legend: **REAL** = official/primary data in `data/raw/` and used for resu
 | NASA POWER hourly clear-sky (CLRSKY_SFC_SW_DWN), same site, 2023 | **REAL** | v2 solar forecast (clear-sky envelope) | `data/raw/nasa_power/bengaluru_2023_hourly_clearsky.json` |
 | Building Data Genome Project 2 (BDG2): hourly electricity meters, 1,578 non-residential buildings, 2016-17 | **REAL** | zone load shapes (7 of 9 zones) | `data/raw/bdg2/electricity_cleaned.csv`, `metadata.csv`, `LICENSE` |
 | Ausgrid Solar Home Electricity Data 2012-13 (half-hourly, 300 homes) | REAL, **superseded by BDG2** (used only if `loads.source: templates`) | hostel load shape (v1) | `data/raw/ausgrid/Solar home 2012-2013.csv` (+ archive zip, notes PDF) |
-| KERC Tariff Order 2023 (BESCOM) HT-2(c)(ii) energy + demand charge + HT ToD; KERC FY24 solar tariff order (export) | **REAL** | price scenario A (headline), demand charge (`tariff_v2`) | `data/raw/tariff/KERC_tariff_order_BESCOM_FY2023-24.pdf`, `KERC_solar_export_tariff.pdf` |
+| KERC Tariff Orders 2022 (FY2022-23) and 2023 (FY2023-24), BESCOM HT-2(c)(ii) energy + demand charge + HT ToD, by date; KERC FY24 solar tariff order (export) | **REAL** | price scenario A (headline), demand charge (`tariff_v2`) | `data/raw/tariff/KERC_tariff_order_BESCOM_FY2022-23.pdf`, `KERC_tariff_order_BESCOM_FY2023-24.pdf`, `KERC_solar_export_tariff.pdf` |
 | IEX Day-Ahead Market 15-min MCP, 2023 | **PENDING** | price scenario B | `data/raw/iex/` |
 | CEA CO2 Baseline Database User Guide v20.0 (weighted average, FY2023-24) | **REAL** | CO2 accounting | `data/raw/cea/CEA_CO2_Baseline_User_Guide_v20.0_Dec2024.pdf`, `emission_factor.yaml` |
 | OpenStreetMap: RVCE campus outline + building footprints | **REAL** | zones, roof area → PV kWp, tie-line layout, 3D campus | `data/raw/osm_rvce.json`, `osm_rvce.geojson` |
@@ -92,9 +92,40 @@ Status legend: **REAL** = official/primary data in `data/raw/` and used for resu
     (no open, licence-clear Indian campus metering dataset was available); the lab/admin proxies
     therefore peak in the evening more than a real lab block would.
 
-## Price scenario A — KERC Tariff Order 2023 (BESCOM HT-2(c)(ii)) + KERC FY24 solar export rate — REAL
+## Price scenario A — KERC Tariff Orders 2022 and 2023 (BESCOM HT-2(c)(ii), by date) + KERC FY24 solar export rate — REAL
+The tariff is date-dependent (`config.yaml prices.A.periods`, `qgrid.data.tariff_period`): days before 2023-04-01 use
+Tariff Order 2022 (FY2022-23), later days Tariff Order 2023 (FY2023-24). Both orders take effect from the first
+meter-reading date on or after 1 April; the switch is modelled on the calendar date (ASSUMPTION: RVCE's meter-reading
+date is unknown).
 Page refs "pN (printed M)": N = page of the merged PDF, M = page number printed on the order.
-- **Import tariff:** KERC Tariff Order 2023 for BESCOM, dated 12 May 2023, effective 1 April 2023 (press note p2).
+- **RVCE's category — HT-2(c)(ii), sourced:** RVCE is a self-financing (private unaided) college run by Rashtreeya
+  Sikshana Samithi Trust (RSST), a not-for-profit trust, per RVCE's NAAC Self Study Report "Final submitted SSR_28 June
+  2024" (`https://rvce.edu.in/sites/default/files/Final%20submitted%20SSR_28%20June%202024_latest.pdf`).
+  **Verification pending:** rvce.edu.in returned HTTP 404/403 to scripted downloads on 2026-11-27, so the statement has
+  not been read and quoted from the PDF here; save a copy as `data/raw/rvce/RVCE_SSR_2024.pdf` and add the page.
+- **ASSUMPTION pending RVCE's BESCOM bill — single connection:** the whole campus, including hostels, is on one HT
+  connection billed under HT-2(c)(ii). Hostels on a separate connection would fall under HT-2(c)(i) ("Hostels of all
+  Educational Institutions"; TO2023 Rs 300/kVA, 750 paise, p215 and p382).
+- **Import tariff FY2022-23 (days before 2023-04-01):** KERC Tariff Order 2022 for BESCOM, dated 4th April 2022,
+  "Effective for the Electricity consumed from the first meter reading date falling on or after 01.04.2022"
+  (p384, printed 375). KERC publishes it as 18 PDFs (`https://kerc.karnataka.gov.in/198/_gallery_/en`, listed under
+  `https://kerc.karnataka.gov.in/69/tariff-order-2022/en`); fetched 2026-11-27, kept unchanged in
+  `data/raw/tariff/KERC_TO2022_BESCOM_parts/` (not committed) and merged in order (pypdf) into
+  `data/raw/tariff/KERC_tariff_order_BESCOM_FY2022-23.pdf` (424 pages, SHA-256 `6869d16a62ddb40a69dd2117241e6c9f038641c5100bcda2f5c69ad51905a55e`).
+  - HT-2(c)(ii) "Applicable to Hospitals/Educational Institutions other than those covered under HT2(c) (i)":
+    demand charges "Rs.265 / kVA of billing demand / month"; energy charges "For the first one lakh units 825 paise
+    per unit", "For the balance units 865 paise per unit": p222 (printed 213), rate schedule p421 (printed 412).
+  - **Two-slab implementation:** the slab is per billing month (ASSUMPTION: billing month = calendar month). Each slot's
+    rate comes from the campus's cumulative grid import since the 1st of the month (`qgrid.data.slab_energy_rate`):
+    8.25 Rs/kWh while it is within the first 1,00,000 kWh, 8.65 after; a slot straddling the boundary gets the
+    energy-weighted mix, so the month's energy bill equals the slab bill exactly. The cumulative import is the
+    modelled campus load minus PV without battery/DG dispatch (status-quo basis). The modelled campus imports about
+    540–625 MWh a month, so the first lakh is used up on day 5–6 of each month; no evaluation or scenario day falls in
+    that window, so all seven FY2022-23 evaluation days are priced at the balance rate.
+  - ToD (HT-2(a), (b), (c)): identical to 2023 — December–June 18–22 h "(+) 100 paise per unit", 22–06 h "(-) 100
+    paise per unit", 06–10 h and 10–18 h 0, July–November 0: p222 (printed 213), p421 (printed 412). Mandatory for
+    contract demand ≥ 500 kVA: p213 (printed 204).
+- **Import tariff FY2023-24 (from 2023-04-01):** KERC Tariff Order 2023 for BESCOM, dated 12 May 2023, effective 1 April 2023 (press note p2).
   KERC publishes it as 16 chapter PDFs (`https://kerc.karnataka.gov.in/309/_gallery_/en`, listed under
   `https://kerc.karnataka.gov.in/84/tariff-order-2023/en`); fetched 2026-11-27, kept unchanged in
   `data/raw/tariff/KERC_TO2023_BESCOM_parts/` and merged in order (pypdf) into
@@ -103,10 +134,9 @@ Page refs "pN (printed M)": N = page of the merged PDF, M = page number printed 
   - Category HT-2(c)(ii) "Applicable to Hospitals and Educational Institutions other than those covered under
     HT-2(c)(i)": p213 (printed 204), tariff schedule p382 (printed 373). HT-2(c)(i) covers Government/charitable/ESI
     hospitals, universities, Government/local-body and aided educational institutions and **hostels of all
-    educational institutions**. RVCE in HT-2(c)(ii) is an **ASSUMPTION** pending RVCE's BESCOM bill.
+    educational institutions**.
   - Energy charge 850 paise/kWh "for entire consumption" (single slab); demand charge Rs 350 per kVA of billing
-    demand per month: p215 (printed 206), p382 (printed 373) → `prices.A.import_base_rs_kwh` = 8.50,
-    `tariff_v2.demand_rs_per_kva_month` = 350.
+    demand per month: p215 (printed 206), p382 (printed 373) → `prices.A.periods[FY2023-24]`.
   - ToD (HT-2(a), (b), (c)(i), (c)(ii)): December–June 18–22 h +100 paise, 22–06 h −100 paise, 06–10 h and
     10–18 h 0; July–November (monsoon period) 0 in every slot: p215 (printed 206); Annexure V note 11 p378
     (printed 369). No morning peak: BESCOM's proposed 06–10 h peak was not approved ("continue with the existing
@@ -120,9 +150,14 @@ Page refs "pN (printed M)": N = page of the merged PDF, M = page number printed 
   1–2000 kW (excluding 1–10 kW domestic) Rs 3.74 per unit, for PPAs entered into on or after 01.04.2023, 25 years:
   p30 → `prices.A.export_rs_kwh` = 3.74. Under third-party models only domestic consumers get net metering; others
   gross metering (p19).
-- **Validity limit:** both orders apply from 1 April 2023. Benchmark days before that date fell under KERC Tariff
-  Order 2022 and the FY22–FY23 solar order (Rs 3.19/unit for 1–2000 kW, quoted in the FY24 order p2); they are
-  priced with the 2023 rates here. Tariff Order 2022 is not yet in `data/raw/`.
+- **Export rate on every day = 3.74:** a solar PPA tariff is fixed for 25 years by the PPA date, not the billing date
+  ("applicable to all the new solar power projects for which PPAs are entered into on or after 01.04.2023", p30), so
+  the model uses one rate for the whole year: a new RVCE rooftop PPA under the FY24 order. (A PPA signed in FY2021-23
+  would carry Rs 3.19/unit, quoted in the FY24 order p2.)
+- **Benchmark sites (Fox, Bull, Cockatoo, Bangkok):** their years (2017/2019) are outside every KERC period, so they get
+  the FY2023-24 period (`prices.A.out_of_range_period`) on local clock time, labelled "RVCE KERC tariff applied for
+  comparability (controlled variable)"; they also use the CEA factor below with the same label. These are not the
+  sites' own tariffs or grid factors.
 - Licence: Government of Karnataka regulatory orders, public documents.
 - Earlier stand-in (no longer used): base 8.00 Rs/kWh, +1.00 06–10 h and 18–22 h, −1.00 22–06 h, export 3.00.
 
@@ -203,7 +238,8 @@ Diesel price 90 Rs/L, fuel curve 0.08 L/h per kW rated + 0.25 L/kWh, 2.68 kg CO2
 - **ASSUMPTIONS for sites without asset data** (one rule for all, `qgrid/datasets.py`): PV = 30 % of each zone's annual energy,
   battery = 2 h of mean load (C-rate 0.5), one diesel set at the zone with the largest critical load (50 % of its 99th-percentile
   load), critical share 10 % (dorms) / 5 % (others), cables in a chain plus two seeded cross-links rated at 25 % of the median
-  zone peak, the stand-in tariff (price scenario A, PENDING) on local clock time.
+  zone peak. Tariff and CO2: RVCE's KERC tariff (FY2023-24 period) on local clock time and RVCE's CEA factor, applied for
+  comparability (controlled variable), not the sites' own.
 - **SYNTHETIC (seeded) events**: unplanned grid outages (20 % of evaluation days, 1–3 h, start 08:00–20:00) and one 3-hour
   campus network outage per day (06:00–21:00) for the communication-failure methods. Official BESCOM planned-cut schedules are
   **PENDING**.

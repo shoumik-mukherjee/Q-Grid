@@ -7,7 +7,7 @@ EUREKA Track 3 · Smart Decentralised Energy Systems · RVCE, Bengaluru
 **{{q3.story.step7}}** {{q3.story.comms}}
 
 > QAOA on a local simulator: verified against exact solutions, no quantum advantage claimed.
-> Tariff: KERC Tariff Order 2023 (BESCOM HT-2(c)(ii), ToD) and KERC FY24 solar export rate; CO₂: CEA v20.0 (FY2023-24). Both REAL, pages in `data/SOURCES.md`.
+> Tariff: KERC Tariff Orders 2022 (FY2022-23) and 2023 (FY2023-24) by date (BESCOM HT-2(c)(ii), ToD) and KERC FY24 solar export rate; CO₂: CEA v20.0 (FY2023-24). Both REAL, pages in `data/SOURCES.md`.
 > Every number in this README is rendered from `results/` by `scripts/write_results_md.py`.
 
 ## Open the demo
@@ -40,7 +40,7 @@ EUREKA Track 3 · Smart Decentralised Energy Systems · RVCE, Bengaluru
 | Q-Grid, 3 h network failure | {{q3.b.rvce.qgrid_comms_fail.gap_pct|2}} | {{q3.b.rvce.qgrid_comms_fail.certified_gap_pct|2}} | {{q3.b.rvce.qgrid_comms_fail.saving_pct|1}} | {{q3.b.rvce.qgrid_comms_fail.critical_downtime_h|2}} | {{q3.b.rvce.qgrid_comms_fail.critical_downtime_1pct_h|2}} | ✓ |
 | _Best possible plan (central MILP, perfect information; reference)_ | _{{q3.b.rvce.optimum.gap_pct|2}}_ | _{{q3.b.rvce.optimum.certified_gap_pct|2}}_ | _{{q3.b.rvce.optimum.saving_pct|1}}_ | _{{q3.b.rvce.optimum.critical_downtime_h|2}}_ | _{{q3.b.rvce.optimum.critical_downtime_1pct_h|2}}_ | — |
 
-\* KERC 2023 tariff ({{price_A_status}}). Across {{q3.n_campuses|0}} campuses (RVCE + four public meter datasets), Q-Grid is the closest
+\* KERC tariff ({{price_A_status}}; benchmark sites: RVCE KERC tariff applied for comparability). Across {{q3.n_campuses|0}} campuses (RVCE + four public meter datasets), Q-Grid is the closest
 method without a central controller on {{q3.best_on_n|0}}. Full tables with ± and 95 % intervals, Wilcoxon verdicts:
 [docs/benchmark_v3.md](docs/benchmark_v3.md) · consistency checks: [docs/consistency.md](docs/consistency.md).
 
@@ -96,7 +96,7 @@ make verify                                # recompute headline numbers, PASS/FA
 | Building Data Genome 2 (CC BY-SA 4.0) | load shapes for 7 of the 9 RVCE zones; three other campuses in the benchmark | real |
 | CU-BEMS (CC BY 4.0) | fifth campus in the benchmark (Bangkok office building) | real |
 | Ausgrid Solar Home Electricity Data (CC BY 3.0 AU) | earlier hostel load shape (superseded by BDG2) | real |
-| KERC Tariff Order 2023 (BESCOM HT-2(c)(ii)) + KERC FY24 solar order | energy tariff with ToD, demand charge, export rate | {{price_A_status}} (category and ≥ 500 kVA ToD applicability: ASSUMPTION pending RVCE's bill) |
+| KERC Tariff Orders 2022 and 2023 (BESCOM HT-2(c)(ii), by date) + KERC FY24 solar order | energy tariff with ToD, demand charge, export rate | {{price_A_status}} (single HT connection incl. hostels and ≥ 500 kVA ToD applicability: ASSUMPTION pending RVCE's bill) |
 | IEX day-ahead prices | sensitivity scenario | **PENDING** — {{price_B_status}} |
 | CEA CO₂ Baseline Database v20.0 | grid emission factor 0.727 tCO₂/MWh (FY2023-24) | real |
 | RVCE meter data, calendar, asset list | loads, day types, battery/diesel sizes | **PENDING** — area-based estimates |
@@ -118,7 +118,7 @@ Licences, URLs and fetch dates: `data/SOURCES.md` · what we asked RVCE for: `do
 ## Honest limits
 
 - No quantum advantage: QAOA is simulated (ideal, noiseless) and is not in the control loop; it was tested and verified.
-- Tariff and CO₂ factor are official (KERC 2023, CEA v20.0); RVCE's tariff category and ToD applicability are assumed until we see its bill. Days before 1 April 2023 are priced with the 2023 rates.
+- Tariff and CO₂ factor are official (KERC Tariff Orders 2022/2023 by date, CEA v20.0); a single HT connection for the whole campus (hostels included) and ToD applicability (≥ 500 kVA) are assumed until we see RVCE's bill.
 - RVCE loads, calendar and asset sizes are stand-ins until the documents arrive.
 - Outages and network failures in the benchmark are synthetic (seeded). Cables are modelled as lossless, without AC power flow.
 - Battery wear is priced with an assumed battery cost and cycle life; real warranty data will change the rate.

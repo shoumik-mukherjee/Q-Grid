@@ -29,7 +29,7 @@ def _build(c, yd, t0=68, H=16, peak=True):
     w = yd.window(d0, t0, H, OUT)
     tv, oc = c.cfg["tariff_v2"], c.cfg["outage_costs"]
     dem = {"voll_nc": oc["voll_noncritical_rs_kwh"], "voll_c": oc["voll_critical_rs_kwh"],
-           "rate_day": tv["demand_rs_per_kva_month"] / tv["days_per_month"], "pf": tv["power_factor"],
+           "rate_day": qd.demand_rate_month(c.cfg, DAY) / tv["days_per_month"], "pf": tv["power_factor"],
            "campus_max_kw": campus_max_kw(c, w), "peak": peak}
     blp, ys, lays = [], [], []
     rng = np.random.default_rng(0)

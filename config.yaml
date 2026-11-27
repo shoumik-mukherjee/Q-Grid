@@ -163,38 +163,65 @@ impact:                       # "Is it worth it?" (scripts/write_impact.py). Eve
 # ----------------------------------------------------------------------------- prices
 prices:
   scenarios: [A, B]
-  # REAL: KERC Tariff Order 2023, BESCOM (dated 12.05.2023, effective 01.04.2023), category HT-2(c)(ii);
-  # KERC solar generic tariff order dated 01.06.2023 (FY24). PDFs in data/raw/tariff/, see data/SOURCES.md.
-  # Page refs "pN (printed M)": N = page of data/raw/tariff/KERC_tariff_order_BESCOM_FY2023-24.pdf (merged), M = page
-  # number printed on the order. Validity: TO2023 and the FY24 solar order apply from 01.04.2023; days before that
-  # date fell under KERC Tariff Order 2022 (not yet obtained) and are priced here with the 2023 rates.
+  # REAL, date-dependent (qgrid.data.tariff_period): KERC Tariff Order 2022 (BESCOM, FY2022-23) for days before
+  # 2023-04-01, KERC Tariff Order 2023 (BESCOM, FY2023-24) from 2023-04-01; category HT-2(c)(ii). PDFs in
+  # data/raw/tariff/, see data/SOURCES.md. Page refs "pN (printed M)": N = page of the merged PDF named in the period,
+  # M = page number printed on the order. Both orders take effect from the first meter-reading date on/after 1 April;
+  # the switch is modelled on the calendar date 2023-04-01 (ASSUMPTION: RVCE's meter-reading date unknown).
   A:
     status: REAL
     role: headline
-    source: "KERC Tariff Order 2023 (BESCOM) HT-2(c)(ii) energy charge + HT ToD; KERC solar tariff order 01.06.2023 (FY24) SRTPV 1-2000 kW export"
+    source: "KERC Tariff Orders 2022 (FY2022-23) and 2023 (FY2023-24), BESCOM HT-2(c)(ii) energy charge + HT ToD; KERC solar tariff order 01.06.2023 (FY24) SRTPV 1-2000 kW export"
     standin_note: "(not used: status REAL; the earlier stand-in was 8.00 Rs/kWh, +1.00 06-10 h & 18-22 h, -1.00 22-06 h, export 3.00)"
-    import_base_rs_kwh: 8.50  # HT-2(c)(ii) "850 paise" per kWh "For entire consumption": p215 (printed 206); rate schedule p382 (printed 373)
-    tod:                      # HT-2(a)/(b)/(c)(i)/(c)(ii) ToD approved by the Commission: p215 (printed 206); Annexure V note 11 p378 (printed 369)
-      # Dec-Jun only; Jul-Nov (monsoon period) every slot 0. No morning peak: 06-10 h is 0 in both seasons
-      # (BESCOM's proposed 06-10 h peak was not approved: "continue with the existing approved ToD Tariff", p170-172 (printed 161-163)).
-      - {start: "18:00", end: "22:00", adder: 1.00, months: [12, 1, 2, 3, 4, 5, 6]}    # (+)100 paise
-      - {start: "22:00", end: "06:00", adder: -1.00, months: [12, 1, 2, 3, 4, 5, 6]}   # (-)100 paise
+    category: >-
+      HT-2(c)(ii) "Hospitals and Educational Institutions other than those covered under HT-2(c)(i)" (TO2023 p213
+      printed 204, p382 printed 373; TO2022 p222 printed 213, p421 printed 412). RVCE is a self-financing (private
+      unaided) college run by Rashtreeya Sikshana Samithi Trust (RSST), a not-for-profit trust: RVCE NAAC Self Study
+      Report, "Final submitted SSR_28 June 2024" (rvce.edu.in; VERIFICATION PENDING: the PDF returns HTTP 403 to
+      scripted downloads and has not been read here, see data/SOURCES.md).
+    connection_assumption: >-
+      ASSUMPTION pending RVCE's BESCOM bill: the whole campus, including hostels, is on a single HT connection billed
+      under HT-2(c)(ii). Hostels on a separate connection would fall under HT-2(c)(i) ("Hostels of all Educational
+      Institutions": TO2023 Rs 300/kVA, 750 paise, p215, p382).
     tod_applicability: >-
       ASSUMPTION pending RVCE's BESCOM bill: ToD is mandatory for HT-2(c) with contract demand >= 500 kVA and optional
-      below (p208, printed 199); RVCE is assumed to be >= 500 kVA, so ToD is applied.
-    category_note: >-
-      ASSUMPTION pending RVCE's bill: RVCE (private, assumed unaided, not itself a university) billed under
-      HT-2(c)(ii) "other than those covered under HT-2(c)(i)" (p213, p382); hostels of all educational institutions
-      are HT-2(c)(i) (Rs 300/kVA, 750 paise, p215, p382) and are not modelled separately.
-    export_rs_kwh: 3.74       # SRTPV 1 kW-2000 kW (excl. 1-10 kW domestic) "Rs.3.74 per unit", new PPAs on/after 01.04.2023, 25 yr: solar order p30
+      below (TO2023 p208 printed 199; TO2022 p213 printed 204); RVCE is assumed to be >= 500 kVA, so ToD is applied.
+    out_of_range_period: FY2023-24   # dates outside every period (benchmark sites, 2017/2019): "RVCE KERC tariff applied for comparability"
+    periods:
+      - name: FY2022-23
+        order: "KERC Tariff Order 2022, BESCOM, dated 4th April 2022 (effective from the first meter reading date on/after 01.04.2022)"
+        pdf: data/raw/tariff/KERC_tariff_order_BESCOM_FY2022-23.pdf
+        from: "2022-04-01"
+        to: "2023-04-01"
+        # HT-2(c)(ii) "For the first one lakh units 825 paise per unit. For the balance units 865 paise per unit.":
+        # p222 (printed 213), rate schedule p421 (printed 412). Slab per billing month on the campus's cumulative grid
+        # import (ASSUMPTION: billing month = calendar month); a slot straddling 1,00,000 kWh gets the energy-weighted mix.
+        energy_slabs:
+          - {first_kwh_per_month: 100000, rs_kwh: 8.25}
+          - {rs_kwh: 8.65}
+        demand_rs_per_kva_month: 265.0   # "Rs.265 / kVA of billing demand / month": p222 (printed 213), p421 (printed 412)
+        tod:                              # HT-2(a)/(b)/(c) ToD: p222 (printed 213), p421 (printed 412); 06-10 h and 10-18 h = 0
+          - {start: "18:00", end: "22:00", adder: 1.00, months: [12, 1, 2, 3, 4, 5, 6]}    # "From December to June (+) 100 paise per unit"
+          - {start: "22:00", end: "06:00", adder: -1.00, months: [12, 1, 2, 3, 4, 5, 6]}   # "From December to June (-) 100 paise per unit"
+        pages: {effective_date: "p384 (printed 375)", tod_mandatory_500kva: "p213 (printed 204)"}
+      - name: FY2023-24
+        order: "KERC Tariff Order 2023, BESCOM, dated 12.05.2023 (effective 01.04.2023)"
+        pdf: data/raw/tariff/KERC_tariff_order_BESCOM_FY2023-24.pdf
+        from: "2023-04-01"
+        to: "2024-04-01"
+        energy_slabs:
+          - {rs_kwh: 8.50}               # "850 paise" per kWh "For entire consumption" (single slab): p215 (printed 206); p382 (printed 373)
+        demand_rs_per_kva_month: 350.0   # "Per KVA Rs.350/-": p215 (printed 206); p382 (printed 373)
+        tod:                              # p215 (printed 206); Annexure V note 11 p378 (printed 369). Dec-Jun only; Jul-Nov 0.
+          # No morning peak: 06-10 h is 0 (BESCOM's proposed 06-10 h peak not approved, p170-172 (printed 161-163)).
+          - {start: "18:00", end: "22:00", adder: 1.00, months: [12, 1, 2, 3, 4, 5, 6]}    # (+)100 paise
+          - {start: "22:00", end: "06:00", adder: -1.00, months: [12, 1, 2, 3, 4, 5, 6]}   # (-)100 paise
+        pages: {effective_date: "data/raw/tariff/KERC_TO2023_press_note_all_ESCOMs.pdf p2", tod_mandatory_500kva: "p208 (printed 199)"}
+    # Export: fixed by the PPA date, not the billing date ("applicable to all the new solar power projects for which PPAs
+    # are entered into on or after 01.04.2023", 25 years), so one rate for every day: a new RVCE rooftop PPA signed under
+    # the FY24 order. SRTPV 1-2000 kW (excl. 1-10 kW domestic) "Rs.3.74 per unit": solar order p30.
+    export_rs_kwh: 3.74
     pages:
-      tariff_order_pdf: data/raw/tariff/KERC_tariff_order_BESCOM_FY2023-24.pdf
-      category_definition: "p213 (printed 204); Annexure V tariff schedule p382 (printed 373)"
-      energy_charge: "p215 (printed 206); p382 (printed 373)"
-      tod: "p215 (printed 206); p378 (printed 369)"
-      tod_mandatory_500kva: "p208 (printed 199)"
-      tod_morning_peak_rejected: "p170-172 (printed 161-163)"
-      effective_date: "data/raw/tariff/KERC_TO2023_press_note_all_ESCOMs.pdf p2"
       export_pdf: data/raw/tariff/KERC_solar_export_tariff.pdf
       export_rate: "p30"
   B:
@@ -262,14 +289,12 @@ rules_dir: rules
 # ----------------------------------------------------------------------------- optimiser v2
 tariff_v2:                    # demand charge on the campus peak (one HT connection; kVA = kW / pf)
   status: REAL
-  source: "KERC Tariff Order 2023 (BESCOM) HT-2(c)(ii): Fixed Charges / month / KVA of Billing Demand"
+  source: "KERC Tariff Orders 2022/2023 (BESCOM) HT-2(c)(ii): demand charge per kVA of billing demand per month"
   standin_note: "(not used: status REAL)"
-  demand_rs_per_kva_month: 350.0   # HT-2(c)(ii) "Per KVA Rs.350/-": p215 (printed 206); rate schedule p382 (printed 373)
+  # the rate is date-dependent: prices.A.periods[*].demand_rs_per_kva_month (Rs 265 before 2023-04-01, Rs 350 after)
   power_factor: 0.95          # ASSUMPTION
   days_per_month: 30          # ASSUMPTION: daily figures carry 1/30 of the monthly charge on the day's peak kVA
-  pages:
-    tariff_order_pdf: data/raw/tariff/KERC_tariff_order_BESCOM_FY2023-24.pdf
-    demand_charge: "p215 (printed 206); p382 (printed 373)"
+  pages: {}                  # see prices.A.periods
 
 v2:
   horizon_slots: 96           # 24 h rolling horizon, re-planned every slot (MPC)

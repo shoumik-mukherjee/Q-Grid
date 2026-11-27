@@ -11,7 +11,9 @@ For the non-RVCE sites the physical assets are not in the data, so one rule (ASS
   diesel      one set at the zone with the largest critical load, 50 % of its peak
   critical    dormitories 10 %, every other zone 5 % of load
   cables      zones in a chain plus two seeded cross-links; rating 25 % of the median zone peak
-  tariff      the stand-in tariff (price scenario A) on local clock time, PENDING like RVCE's
+  tariff      RVCE's KERC tariff (price scenario A, FY2023-24 period: config.yaml prices.A.out_of_range_period) on local
+              clock time, applied for comparability (controlled variable); not the sites' own tariffs
+  CO2         the CEA factor RVCE uses (data/raw/cea/emission_factor.yaml), same controlled-variable label
 Outages (all datasets, labelled SYNTHETIC): each evaluation day has a seeded 20 % chance of one unplanned grid outage
 of 1-3 h starting between 08:00 and 20:00. Official BESCOM planned-cut schedules are PENDING.
 """
@@ -52,6 +54,9 @@ SPECS = {
     "bdg2_cockatoo": Spec("bdg2_cockatoo", "BDG2 university site 'Cockatoo' (New York)", "bdg2", 2017, "Cockatoo", 42.459837, -76.485292, "CC BY-SA 4.0"),
     "cubems": Spec("cubems", "CU-BEMS office building, Bangkok (7 floors)", "cubems", 2019, "Chamchuri 5", 13.7367, 100.5332, "CC BY 4.0"),
 }
+
+COMPARABILITY_TARIFF = "RVCE KERC tariff applied for comparability (controlled variable)"
+COMPARABILITY_CO2 = "RVCE CEA CO2 factor applied for comparability (controlled variable)"
 
 GROUPS = [   # BDG2 zone groups (primary use, sub-uses or None for all)
     ("academic", "Education", {"College Classroom", "Academic", "Classroom", "Education", "Student Union"}),
@@ -203,20 +208,21 @@ def build(key: str) -> tuple[Campus, dict]:
     pv = pd.DataFrame({b.name: b.pv_kwp * pv1 for b in blds}, index=idx)
     crit = pd.DataFrame({z: load[z] * crit_frac[z] for z in names}, index=idx)
     water = pd.Series(np.zeros(len(idx)), index=idx)
-    # stand-in tariff A on local clock time (same rates as RVCE's stand-in)
+    # RVCE's KERC tariff (price scenario A) on local clock time, applied for comparability (controlled variable).
+    # The sites' years (2017/2019) are outside every KERC period, so qdata.price_a_import uses the FY2023-24 period.
     pa = cfg["prices"]["A"]
-    imp = np.full(len(idx), pa["import_base_rs_kwh"])
-    for r in pa["tod"]:
-        imp = imp + pa_adder(idx, r)
+    imp = qdata.price_a_import(idx, cfg)
     price = pd.DataFrame({"A_import": imp, "A_export": np.full(len(idx), pa["export_rs_kwh"])}, index=idx)
     price["B_import"], price["B_export"] = price.A_import, price.A_export
     days = _eval_days(spec.year, seed)
     dtypes = _day_types(idx, office=spec.kind == "cubems")
-    meta = {"year": spec.year, "co2": {"tco2_per_mwh": cfg["co2"]["standin_tco2_per_mwh"], "status": "PENDING"},
-            "prices": {"A": {"status": "PENDING"}, "B": {"status": "PENDING"}},
+    co2 = qdata.load_co2_factor(cfg)
+    meta = {"year": spec.year, "co2": {"tco2_per_mwh": co2["tco2_per_mwh"], "status": COMPARABILITY_CO2},
+            "prices": {"A": {"status": COMPARABILITY_TARIFF}, "B": {"status": COMPARABILITY_TARIFF}},
             "days": {"eval_days": days, "scenarios": {}, "outages": _outages(days, seed)},
             "data_status": {"loads": f"REAL ({spec.label}, {spec.licence})", "weather": "REAL (NASA POWER)",
-                            "assets": "ASSUMPTION (sizing rule, qgrid/datasets.py)", "tariff": "PENDING stand-in",
+                            "assets": "ASSUMPTION (sizing rule, qgrid/datasets.py)", "tariff": COMPARABILITY_TARIFF,
+                            "co2": COMPARABILITY_CO2,
                             "outages": "SYNTHETIC seeded"},
             "dataset": {"key": key, "label": spec.label, "zones": zinfo, "lines": layout["lines"], "step_kw": step,
                         "pv_kwp": {b.name: b.pv_kwp for b in blds}, "battery_kwh": {b.name: b.battery.kwh for b in blds},
@@ -224,13 +230,3 @@ def build(key: str) -> tuple[Campus, dict]:
     proc = {"pv": pv, "load": load[names], "crit": crit, "water": water, "price": price,
             "weather": w, "meta": meta, "campus": layout, "per_kwp_act": pv1, "per_kwp_cs": cs1, "day_type": dtypes}
     return campus, proc
-
-
-def pa_adder(idx: pd.DatetimeIndex, r: dict) -> np.ndarray:
-    a = int(r["start"][:2]) * 4 + int(r["start"][3:]) // 15
-    b = int(r["end"][:2]) * 4 + int(r["end"][3:]) // 15
-    slot = idx.hour * 4 + idx.minute // 15
-    m = (slot >= a) & (slot < b) if a < b else (slot >= a) | (slot < b)
-    if r.get("months") is not None:              # season-dependent ToD (same rule as qgrid.data.tod_adder)
-        m = m & np.isin(idx.month, [int(x) for x in r["months"]])
-    return np.where(m, r["adder"], 0.0)

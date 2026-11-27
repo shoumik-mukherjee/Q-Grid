@@ -251,7 +251,9 @@ def values_v2() -> dict:
     import yaml
     cfg = yaml.safe_load((ROOT / "config.yaml").read_text())
     v["v2.tariff_status"] = cfg["tariff_v2"]["status"]
-    v["v2.demand_rate_month"] = float(cfg["tariff_v2"]["demand_rs_per_kva_month"])
+    from qgrid import data as qdata
+    meta = json.loads((ROOT / "data" / "processed" / "meta.json").read_text())
+    v["v2.demand_rate_month"] = qdata.demand_rate_month(cfg, meta["days"]["scenarios"][cfg["headline_scenario"]]["date"])  # headline day
     return v
 
 

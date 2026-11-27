@@ -343,6 +343,7 @@ def attach_v2(campus, meta, outs: dict) -> None:
         return
     import pandas as pd
     from qgrid import QUANTUM_LABEL
+    from qgrid import data as qdata
     b = pd.read_csv(d / "benchmark_v2.csv")
     s = pd.read_csv(d / "benchmark_v2_summary.csv")
     cols = [c for c in V2_COLS if c in b.columns]
@@ -352,7 +353,8 @@ def attach_v2(campus, meta, outs: dict) -> None:
     for k, o in outs.items():
         rows = b[b.scenario == k][cols].to_dict(orient="records")
         o["v2"] = {"rows": rows, "summary": summ, "tariff_status": tv["status"],
-                   "demand_rs_per_kva_month": tv["demand_rs_per_kva_month"], "days_per_month": tv["days_per_month"],
+                   "demand_rs_per_kva_month": qdata.demand_rate_month(campus.cfg, meta["days"]["scenarios"][k]["date"]),
+                   "days_per_month": tv["days_per_month"],
                    "power_factor": tv["power_factor"], "label": QUANTUM_LABEL}
         if "qgrid_v2" in o["runs"]:
             row = b[(b.scenario == k) & (b.method == "V2-QAOA")]

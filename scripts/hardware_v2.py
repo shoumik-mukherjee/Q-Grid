@@ -118,7 +118,7 @@ def campus_qubo() -> dict:
     w = yd.window(yd.day_start(sc["date"]), 0, cfg.H, sc.get("outage"))
     tv, oc = campus.cfg["tariff_v2"], campus.cfg["outage_costs"]
     dem = {"voll_nc": oc["voll_noncritical_rs_kwh"], "voll_c": oc["voll_critical_rs_kwh"],
-           "rate_day": tv["demand_rs_per_kva_month"] / tv["days_per_month"], "pf": tv["power_factor"],
+           "rate_day": qdata.demand_rate_month(campus.cfg, sc["date"]) / tv["days_per_month"], "pf": tv["power_factor"],
            "campus_max_kw": campus_max_kw(campus, w)}
     sts = [BState(e=b.battery.e0, level=b.tank.level0 if b.tank else 0.0, dg_on=False, dg_run=99) for b in campus.buildings]
     lays = [layout(campus, i, w, sts[i], 0, cfg.block, cfg.min_off) for i in range(campus.n)]

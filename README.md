@@ -8,7 +8,8 @@ EUREKA Track 3 · Smart Decentralised Energy Systems
 > QIEA = quantum-inspired evolutionary algorithm on a classical CPU (not quantum computing).
 
 **Data status:** real NASA POWER irradiance, Ausgrid household shapes (hostels), OpenStreetMap layout (© OpenStreetMap
-contributors), KERC Tariff Order 2023 (BESCOM HT-2(c)(ii) with ToD, Rs 350/kVA demand charge, 3.74 Rs/kWh export) and
+contributors), KERC Tariff Orders 2022/2023 by date (BESCOM HT-2(c)(ii) with ToD; FY2023-24: 8.50 Rs/kWh, Rs 350/kVA;
+FY2022-23: 825/865 paise two-slab, Rs 265/kVA; export 3.74 Rs/kWh) and
 CEA CO2 factor v20.0 (0.727 tCO2/MWh, FY2023-24). **PENDING:** IEX prices, RVCE calendar and meter data — labelled
 stand-ins, never headline results. **The Rs figures below were computed with the earlier stand-in tariff and will change
 when results are regenerated with the KERC 2023 tariff.** See `data/SOURCES.md`, `docs/BLOCKERS.md`, `docs/data_request.md`.
@@ -66,7 +67,7 @@ python scripts/new_campus.py --name "<campus>" --lat <lat> --lon <lon>   # anoth
 | Step | What | State |
 |---|---|---|
 | 0–5 | generic 5-building pipeline (first prototype), kept in docs/results_v1.md | ✅ |
-| 1 | pricing scenarios A (headline) / B (sensitivity), SOURCES with page numbers when REAL | ✅ code · A: KERC 2023 REAL (season-dependent ToD), CEA v20.0 REAL · B (IEX) PENDING · results not yet regenerated |
+| 1 | pricing scenarios A (headline) / B (sensitivity), SOURCES with page numbers when REAL | ✅ code · A: KERC 2022/2023 REAL by date (season-dependent ToD, two-slab FY2022-23), CEA v20.0 REAL · B (IEX) PENDING · results not yet regenerated |
 | 2 | RVCE campus from OSM, timetable/Ausgrid loads, DG, tanks, outage islanding, 6 scenarios | ✅ (calendar/loads PENDING) |
 | 3 | QAOA only on scenarios, warm start, QUBO cache, ADMM convergence stats & fallbacks | ✅ |
 | 4 | QAOA → QIEA → SA → exact tiers, C-QIEA, baselines B0–B5, benchmark both price scenarios | ✅ |
@@ -79,7 +80,7 @@ python scripts/new_campus.py --name "<campus>" --lat <lat> --lon <lon>   # anoth
 | 11 | explainer: light / dark / system theme (one token file, `D`), presenter mode (`P`, step timer, projector sizing), one-page summary (print → PDF), friendly missing-file states, lazy 3D / KaTeX chunks, WCAG AA contrast test for both themes (`npm run test:contrast`), checked at 1280×720 / 1440×900 / 1920×1080 | ✅ (branch ui-dark-mode) |
 
 ## Honest limits
-PENDING IEX prices/calendar/meter data; RVCE's tariff category and ≥ 500 kVA ToD applicability are ASSUMPTIONS pending its bill; loads are area-based estimates; perfect forecasts; QAOA simulated (ideal, noiseless);
+PENDING IEX prices/calendar/meter data; single HT connection (hostels included) and ≥ 500 kVA ToD applicability are ASSUMPTIONS pending RVCE's bill; loads are area-based estimates; perfect forecasts; QAOA simulated (ideal, noiseless);
 ADMM with binaries has no convergence guarantee (full agreement in 48.7 % of slots, rest settled safely);
 lossless tie-lines without AC power flow. Docs: [report](docs/report.md) · [why quantum](docs/why_quantum.md) ·
 [viva Q&A](docs/viva_qa.md) · [pitch](docs/pitch.md) · [QUBO derivation](docs/qubo.md).

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import numpy as np
 
+from .. import data as qdata
 from ..model import DT, T, Campus
 from ..solvers.qaoa import load_params, run_qaoa
 from .admm_lp import run_admm
@@ -64,7 +65,7 @@ def explain_slot(campus: Campus, yd: YearData, day: str, outage, sj: dict, t0: i
     d0 = yd.day_start(day)
     w = yd.window(d0, t0, cfg.H, outage)
     dem = {"voll_nc": float(oc["voll_noncritical_rs_kwh"]), "voll_c": float(oc["voll_critical_rs_kwh"]),
-           "rate_day": tv["demand_rs_per_kva_month"] / tv["days_per_month"], "pf": float(tv["power_factor"]),
+           "rate_day": qdata.demand_rate_month(campus.cfg, day) / tv["days_per_month"], "pf": float(tv["power_factor"]),
            "campus_max_kw": campus_max_kw(campus, w)}
     pf = dem["pf"]
     net = np.array(sj["net_kw"])

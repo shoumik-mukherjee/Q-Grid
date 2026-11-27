@@ -20,6 +20,7 @@ from dataclasses import dataclass, field
 
 import numpy as np
 
+from .. import data as qdata
 from ..model import DT, T, Campus, Schedule
 from ..safety import clamp_battery, clamp_flow, dg_decision, flex_decision, pump_decision
 from .admm_lp import prices, run_admm
@@ -216,7 +217,7 @@ def _run_day_v2(campus: Campus, yd: YearData, day: str, outage: list[str] | None
     tv = campus.cfg["tariff_v2"]
     oc = campus.cfg["outage_costs"]
     demand = {"voll_nc": float(oc["voll_noncritical_rs_kwh"]), "voll_c": float(oc["voll_critical_rs_kwh"]),
-              "rate_day": (tv["demand_rs_per_kva_month"] / tv["days_per_month"]) if cfg.peak_shaving else 0.0,
+              "rate_day": (qdata.demand_rate_month(campus.cfg, day) / tv["days_per_month"]) if cfg.peak_shaving else 0.0,
               "pf": float(tv["power_factor"])}
     d0 = yd.day_start(day)
     n = campus.n

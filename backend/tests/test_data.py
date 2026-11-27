@@ -71,7 +71,7 @@ def test_window_mask_wraps_midnight():
 
 def test_price_scenarios_standin_shapes():
     cfg = data.load_config()
-    prices, status = data.build_prices(cfg)
+    prices, status = data.build_prices(cfg, np.full(365 * 96, 1000.0))   # SYNTHETIC campus import (slab tariff)
     assert {"A_import", "A_export", "B_import", "B_export"} <= set(prices.columns)
     assert len(prices) == 365 * 96
     for k in ("A", "B"):
@@ -96,26 +96,43 @@ def test_tod_adder_season_dependent():
     assert allyear.tolist() == [1.0, 0.0]                 # no `months` key -> every month
 
 
-def test_datasets_pa_adder_matches_tod_adder():
-    from qgrid.datasets import pa_adder
-    idx = pd.date_range("2023-01-01", "2023-12-31 23:45", freq="15min")
-    win = [{"start": "18:00", "end": "22:00", "adder": 1.00, "months": DEC_JUN},
-           {"start": "22:00", "end": "06:00", "adder": -1.00, "months": DEC_JUN}]
-    np.testing.assert_array_equal(sum(pa_adder(idx, w) for w in win), data.tod_adder(idx, win))
+def test_slab_energy_rate_bills_exactly():
+    """SYNTHETIC two-slab charge: first 100 kWh at 1.00, balance at 2.00 per billing month."""
+    slabs = [{"first_kwh_per_month": 100, "rs_kwh": 1.0}, {"rs_kwh": 2.0}]
+    e = np.array([60.0, 60.0, 60.0, 0.0])
+    cum = np.array([0.0, 60.0, 120.0, 180.0])
+    r = data.slab_energy_rate(slabs, cum, e)
+    assert r[0] == pytest.approx(1.0)
+    assert r[1] == pytest.approx((40 * 1.0 + 20 * 2.0) / 60)    # straddles the slab boundary
+    assert r[2] == pytest.approx(2.0)
+    assert r[3] == pytest.approx(2.0)                          # no energy -> marginal rate
+    assert float((r * e).sum()) == pytest.approx(100 * 1.0 + 80 * 2.0)   # equals the slab bill
 
 
-def test_price_scenario_a_matches_kerc_2023_when_real():
-    """If prices.A is REAL, the built series must equal the KERC 2023 HT-2(c)(ii) figures recorded in config.yaml."""
+def test_price_scenario_a_date_dependent_kerc():
+    """Either side of 2023-04-01: FY2022-23 (two-slab 825/865 paise, Rs 265/kVA) vs FY2023-24 (850 paise, Rs 350/kVA).
+    Grid import is SYNTHETIC (constant 2,000 kW = 500 kWh per slot -> the 1 lakh slab is used up after 200 slots)."""
     cfg = data.load_config()
-    a = cfg["prices"]["A"]
-    if a["status"] != "REAL":
+    if cfg["prices"]["A"]["status"] != "REAL":
         pytest.skip("price scenario A is not REAL")
-    idx = data.year_index(cfg["site"]["year"])
-    imp = a["import_base_rs_kwh"] + data.tod_adder(idx, a["tod"])
-    s = pd.Series(imp, index=idx)
-    base = a["import_base_rs_kwh"]
-    assert s["2023-01-10 19:00"] == pytest.approx(base + 1.0)     # Dec-Jun evening peak
-    assert s["2023-01-10 23:00"] == pytest.approx(base - 1.0)     # Dec-Jun night rebate
-    assert s["2023-01-10 08:00"] == pytest.approx(base)           # no morning peak
-    assert s["2023-08-10 19:00"] == pytest.approx(base)           # Jul-Nov: no ToD
-    assert s["2023-08-10 23:00"] == pytest.approx(base)
+    idx = data.year_index(2023)
+    s = pd.Series(data.price_a_import(idx, cfg, np.full(len(idx), 2000.0)), index=idx)
+    # FY2022-23 (before 2023-04-01)
+    assert s["2023-03-01 00:00"] == pytest.approx(8.25 - 1.0)   # first lakh units, Dec-Jun night rebate
+    assert s["2023-03-31 08:00"] == pytest.approx(8.65)         # balance units, no morning peak
+    assert s["2023-03-31 19:00"] == pytest.approx(8.65 + 1.0)   # balance units + evening peak
+    assert data.demand_rate_month(cfg, "2023-03-31") == 265.0
+    # FY2023-24 (from 2023-04-01)
+    assert s["2023-04-01 08:00"] == pytest.approx(8.50)
+    assert s["2023-04-01 19:00"] == pytest.approx(8.50 + 1.0)
+    assert s["2023-04-01 23:00"] == pytest.approx(8.50 - 1.0)
+    assert s["2023-08-10 19:00"] == pytest.approx(8.50)         # Jul-Nov: no ToD
+    assert data.demand_rate_month(cfg, "2023-04-01") == 350.0
+    # slab charge needs the campus import
+    with pytest.raises(ValueError):
+        data.price_a_import(idx, cfg)
+    # benchmark sites (2017/2019) are outside every period -> FY2023-24 for comparability
+    p = data.tariff_period(cfg, "2017-06-01")
+    assert p["name"] == cfg["prices"]["A"]["out_of_range_period"] and not p["in_range"]
+    s17 = data.price_a_import(data.year_index(2017), cfg)
+    assert set(np.round(np.unique(s17), 2)) == {7.5, 8.5, 9.5}
