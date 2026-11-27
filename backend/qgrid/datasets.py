@@ -231,4 +231,6 @@ def pa_adder(idx: pd.DatetimeIndex, r: dict) -> np.ndarray:
     b = int(r["end"][:2]) * 4 + int(r["end"][3:]) // 15
     slot = idx.hour * 4 + idx.minute // 15
     m = (slot >= a) & (slot < b) if a < b else (slot >= a) | (slot < b)
+    if r.get("months") is not None:              # season-dependent ToD (same rule as qgrid.data.tod_adder)
+        m = m & np.isin(idx.month, [int(x) for x in r["months"]])
     return np.where(m, r["adder"], 0.0)

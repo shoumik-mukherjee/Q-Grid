@@ -78,3 +78,44 @@ def test_price_scenarios_standin_shapes():
         assert status[k]["status"] in ("REAL", "PENDING")
         if status[k]["status"] == "PENDING":
             assert "STAND-IN" in status[k]["note"]
+
+
+DEC_JUN = [12, 1, 2, 3, 4, 5, 6]
+
+
+def test_tod_adder_season_dependent():
+    """SYNTHETIC windows: Dec-Jun 18-22 h +1.00, 22-06 h -1.00; Jul-Nov no ToD; windows without months = all year."""
+    win = [{"start": "18:00", "end": "22:00", "adder": 1.00, "months": DEC_JUN},
+           {"start": "22:00", "end": "06:00", "adder": -1.00, "months": DEC_JUN}]
+    idx = pd.DatetimeIndex(["2023-01-10 07:00", "2023-01-10 18:00", "2023-01-10 21:45", "2023-01-10 22:00",
+                            "2023-01-10 05:45", "2023-06-30 19:00", "2023-07-01 19:00", "2023-08-15 23:00",
+                            "2023-11-30 19:00", "2023-12-01 19:00", "2023-12-31 02:00"])
+    got = data.tod_adder(idx, win)
+    assert got.tolist() == [0.0, 1.0, 1.0, -1.0, -1.0, 1.0, 0.0, 0.0, 0.0, 1.0, -1.0]
+    allyear = data.tod_adder(idx[[6, 7]], [{"start": "18:00", "end": "22:00", "adder": 1.0}])
+    assert allyear.tolist() == [1.0, 0.0]                 # no `months` key -> every month
+
+
+def test_datasets_pa_adder_matches_tod_adder():
+    from qgrid.datasets import pa_adder
+    idx = pd.date_range("2023-01-01", "2023-12-31 23:45", freq="15min")
+    win = [{"start": "18:00", "end": "22:00", "adder": 1.00, "months": DEC_JUN},
+           {"start": "22:00", "end": "06:00", "adder": -1.00, "months": DEC_JUN}]
+    np.testing.assert_array_equal(sum(pa_adder(idx, w) for w in win), data.tod_adder(idx, win))
+
+
+def test_price_scenario_a_matches_kerc_2023_when_real():
+    """If prices.A is REAL, the built series must equal the KERC 2023 HT-2(c)(ii) figures recorded in config.yaml."""
+    cfg = data.load_config()
+    a = cfg["prices"]["A"]
+    if a["status"] != "REAL":
+        pytest.skip("price scenario A is not REAL")
+    idx = data.year_index(cfg["site"]["year"])
+    imp = a["import_base_rs_kwh"] + data.tod_adder(idx, a["tod"])
+    s = pd.Series(imp, index=idx)
+    base = a["import_base_rs_kwh"]
+    assert s["2023-01-10 19:00"] == pytest.approx(base + 1.0)     # Dec-Jun evening peak
+    assert s["2023-01-10 23:00"] == pytest.approx(base - 1.0)     # Dec-Jun night rebate
+    assert s["2023-01-10 08:00"] == pytest.approx(base)           # no morning peak
+    assert s["2023-08-10 19:00"] == pytest.approx(base)           # Jul-Nov: no ToD
+    assert s["2023-08-10 23:00"] == pytest.approx(base)

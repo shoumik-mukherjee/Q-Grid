@@ -3,15 +3,26 @@
   "campus": "RVCE",
   "osm_sha256": "04dfc10996581ef4ce9e27e3b1e660c4e2b8f8f47d31e4e9ec6fbc5a9ae36e76",
   "co2": {
-    "status": "PENDING",
+    "status": "REAL",
     "tco2_per_mwh": 0.727,
-    "note": "CEA CO2 Baseline Database v20.0 weighted average (FY2023-24) as quoted by secondary sources (Climatiq; Saur Energy); not yet verified against the CEA PDF."
+    "weighted_average_tco2_per_mwh": 0.727,
+    "version": "20.0",
+    "published": "December 2024",
+    "fiscal_year": "2023-24",
+    "basis": "Table S: Weighted average emission factor of the Indian Grid for FY 2023-24 (adjusted for cross-border electricity transfers) (including RES & Captive power injection into grid), in tCO2/MWh. Same table: OM 0.962, BM 0.552, CM 0.757.",
+    "page": "PDF page 4 (printed 'Page | 1'), Table S",
+    "pdf": "data/raw/cea/CEA_CO2_Baseline_User_Guide_v20.0_Dec2024.pdf",
+    "pdf_sha256": "b881c258f58fd77c8faeb36479ccd1ed8bd111c45e708196df8a66ff7b29afc6",
+    "url": "https://cea.nic.in/api/cdm-report-version/view-pdf/en/76",
+    "fetched": "2026-11-27",
+    "publisher": "Central Electricity Authority, Ministry of Power, Government of India",
+    "note": "v20.0 chosen because the benchmark year is 2023 (FY2023-24 covers Apr 2023 - Mar 2024). The latest guide, v22.0 (Aug 2026, FY2025-26 weighted average 0.675), states in its revision history that it replaced earlier provisional data for 2022-23 and 2023-24; any revised FY2023-24 value in v22 has not been checked."
   },
   "prices": {
     "A": {
-      "status": "PENDING",
-      "source": "KERC tariff order: BESCOM HT educational institutions (ToD) import; KERC solar net-metering/feed-in rate export",
-      "note": "STAND-IN placeholder rates, NOT taken from a KERC/BESCOM document"
+      "status": "REAL",
+      "source": "KERC Tariff Order 2023 (BESCOM) HT-2(c)(ii) energy charge + HT ToD; KERC solar tariff order 01.06.2023 (FY24) SRTPV 1-2000 kW export",
+      "note": ""
     },
     "B": {
       "status": "PENDING",
@@ -175,8 +186,8 @@
     "osm_layout": "REAL",
     "bdg2_load_shapes": "REAL",
     "iex": "PENDING",
-    "tariff_A": "PENDING",
-    "cea": "PENDING",
+    "tariff_A": "REAL",
+    "cea": "REAL",
     "calendar": "PENDING",
     "campus_loads": "PENDING RVCE DATA",
     "lab_schedule": "TEMPLATE"

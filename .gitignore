@@ -16,6 +16,15 @@ data/raw/*
 !data/raw/osm_*.json
 !data/raw/.gitkeep
 !data/raw/SOURCES.md
+# official sources needed to reproduce headline numbers from a fresh clone (see data/SOURCES.md)
+!data/raw/cea/
+data/raw/cea/*
+!data/raw/cea/emission_factor.yaml
+!data/raw/cea/CEA_CO2_Baseline_User_Guide_v20.0_Dec2024.pdf
+!data/raw/tariff/
+data/raw/tariff/*
+!data/raw/tariff/KERC_tariff_order_BESCOM_FY2023-24.pdf
+!data/raw/tariff/KERC_solar_export_tariff.pdf
 data/processed/*.parquet
 !data/processed/campus.json
 !data/processed/.gitkeep

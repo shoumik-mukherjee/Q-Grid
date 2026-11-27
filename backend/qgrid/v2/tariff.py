@@ -3,7 +3,8 @@
 The campus is one HT connection: peak kVA = max over the day's grid-connected slots of the campus import
 (sum over zones) / power factor. BESCOM bills the demand charge monthly on the recorded maximum demand; daily
 figures here carry 1/days_per_month of that monthly charge on the day's peak (ASSUMPTION, labelled).
-The rate is a PENDING stand-in until the official BESCOM/KERC tariff PDF is added (config.yaml: tariff_v2).
+The rate comes from config.yaml tariff_v2: REAL = KERC Tariff Order 2023, BESCOM HT-2(c)(ii), Rs 350/kVA/month
+(page references in config.yaml and data/SOURCES.md).
 """
 from __future__ import annotations
 

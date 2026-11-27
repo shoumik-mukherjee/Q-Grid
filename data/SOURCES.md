@@ -11,9 +11,9 @@ Status legend: **REAL** = official/primary data in `data/raw/` and used for resu
 | NASA POWER hourly clear-sky (CLRSKY_SFC_SW_DWN), same site, 2023 | **REAL** | v2 solar forecast (clear-sky envelope) | `data/raw/nasa_power/bengaluru_2023_hourly_clearsky.json` |
 | Building Data Genome Project 2 (BDG2): hourly electricity meters, 1,578 non-residential buildings, 2016-17 | **REAL** | zone load shapes (7 of 9 zones) | `data/raw/bdg2/electricity_cleaned.csv`, `metadata.csv`, `LICENSE` |
 | Ausgrid Solar Home Electricity Data 2012-13 (half-hourly, 300 homes) | REAL, **superseded by BDG2** (used only if `loads.source: templates`) | hostel load shape (v1) | `data/raw/ausgrid/Solar home 2012-2013.csv` (+ archive zip, notes PDF) |
-| BESCOM HT educational tariff with ToD + KERC solar export rate | **PENDING** | price scenario A (headline) | `data/raw/tariff/` |
+| KERC Tariff Order 2023 (BESCOM) HT-2(c)(ii) energy + demand charge + HT ToD; KERC FY24 solar tariff order (export) | **REAL** | price scenario A (headline), demand charge (`tariff_v2`) | `data/raw/tariff/KERC_tariff_order_BESCOM_FY2023-24.pdf`, `KERC_solar_export_tariff.pdf` |
 | IEX Day-Ahead Market 15-min MCP, 2023 | **PENDING** | price scenario B | `data/raw/iex/` |
-| CEA CO2 Baseline Database (grid weighted-average emission factor) | **PENDING** | CO2 accounting | `data/raw/cea/` |
+| CEA CO2 Baseline Database User Guide v20.0 (weighted average, FY2023-24) | **REAL** | CO2 accounting | `data/raw/cea/CEA_CO2_Baseline_User_Guide_v20.0_Dec2024.pdf`, `emission_factor.yaml` |
 | OpenStreetMap: RVCE campus outline + building footprints | **REAL** | zones, roof area → PV kWp, tie-line layout, 3D campus | `data/raw/osm_rvce.json`, `osm_rvce.geojson` |
 | RVCE academic calendar | **PENDING** (fest dates sourced) | day types / scenario dates | `data/raw/rvce_calendar.csv` (optional) |
 | RVCE BESCOM bills / meter data | **PENDING RVCE DATA** | campus load totals | `data/raw/rvce_bills.csv` (optional) |
@@ -92,24 +92,55 @@ Status legend: **REAL** = official/primary data in `data/raw/` and used for resu
     (no open, licence-clear Indian campus metering dataset was available); the lab/admin proxies
     therefore peak in the evening more than a real lab block would.
 
-## Price scenario A — BESCOM HT educational ToD tariff + KERC solar export rate — PENDING
-- Needed: the KERC tariff order applicable to 2023 (BESCOM HT educational institutions category,
-  energy charge + ToD adders) and the KERC order fixing the solar (rooftop/export) tariff.
-- STAND-IN currently used (config.yaml `prices.A`, labelled STAND-IN everywhere): base 8.00 Rs/kWh,
-  +1.00 06–10 h and 18–22 h, −1.00 22–06 h, export 3.00 Rs/kWh. **These are placeholders, not KERC figures.**
+## Price scenario A — KERC Tariff Order 2023 (BESCOM HT-2(c)(ii)) + KERC FY24 solar export rate — REAL
+Page refs "pN (printed M)": N = page of the merged PDF, M = page number printed on the order.
+- **Import tariff:** KERC Tariff Order 2023 for BESCOM, dated 12 May 2023, effective 1 April 2023 (press note p2).
+  KERC publishes it as 16 chapter PDFs (`https://kerc.karnataka.gov.in/309/_gallery_/en`, listed under
+  `https://kerc.karnataka.gov.in/84/tariff-order-2023/en`); fetched 2026-11-27, kept unchanged in
+  `data/raw/tariff/KERC_TO2023_BESCOM_parts/` and merged in order (pypdf) into
+  `data/raw/tariff/KERC_tariff_order_BESCOM_FY2023-24.pdf` (385 pages, SHA-256 `018d3be54cca27e46803b584e0f676fc2c025a78c4ebc14eac422eeb40987b5b`).
+  Press note: `https://kerc.karnataka.gov.in/uploads/36411683893437.pdf` → `KERC_TO2023_press_note_all_ESCOMs.pdf`.
+  - Category HT-2(c)(ii) "Applicable to Hospitals and Educational Institutions other than those covered under
+    HT-2(c)(i)": p213 (printed 204), tariff schedule p382 (printed 373). HT-2(c)(i) covers Government/charitable/ESI
+    hospitals, universities, Government/local-body and aided educational institutions and **hostels of all
+    educational institutions**. RVCE in HT-2(c)(ii) is an **ASSUMPTION** pending RVCE's BESCOM bill.
+  - Energy charge 850 paise/kWh "for entire consumption" (single slab); demand charge Rs 350 per kVA of billing
+    demand per month: p215 (printed 206), p382 (printed 373) → `prices.A.import_base_rs_kwh` = 8.50,
+    `tariff_v2.demand_rs_per_kva_month` = 350.
+  - ToD (HT-2(a), (b), (c)(i), (c)(ii)): December–June 18–22 h +100 paise, 22–06 h −100 paise, 06–10 h and
+    10–18 h 0; July–November (monsoon period) 0 in every slot: p215 (printed 206); Annexure V note 11 p378
+    (printed 369). No morning peak: BESCOM's proposed 06–10 h peak was not approved ("continue with the existing
+    approved ToD Tariff"): p170–172 (printed 161–163). Encoded with `months: [12, 1, …, 6]` per window
+    (`qgrid.data.tod_adder`); a slot's own calendar month decides the season.
+  - ToD applicability: mandatory for HT-2(c) with contract demand ≥ 500 kVA, optional below: p208 (printed 199).
+    RVCE ≥ 500 kVA is an **ASSUMPTION** pending RVCE's bill.
+- **Export rate:** KERC order dated 01.06.2023, "Determination of Tariff and norms in respect of Solar Power Projects
+  (including Solar Rooftop Photovoltaic Projects) for FY24", `https://kerc.karnataka.gov.in/uploads/media_to_upload1685615785.pdf`
+  → `data/raw/tariff/KERC_solar_export_tariff.pdf` (SHA-256 `5e5d1c2edbbc3456341b0c9e410ccc6cfee41e0ecab2d9d8532fb3bb005930ad`), fetched 2026-11-27. Rooftop PV
+  1–2000 kW (excluding 1–10 kW domestic) Rs 3.74 per unit, for PPAs entered into on or after 01.04.2023, 25 years:
+  p30 → `prices.A.export_rs_kwh` = 3.74. Under third-party models only domestic consumers get net metering; others
+  gross metering (p19).
+- **Validity limit:** both orders apply from 1 April 2023. Benchmark days before that date fell under KERC Tariff
+  Order 2022 and the FY22–FY23 solar order (Rs 3.19/unit for 1–2000 kW, quoted in the FY24 order p2); they are
+  priced with the 2023 rates here. Tariff Order 2022 is not yet in `data/raw/`.
+- Licence: Government of Karnataka regulatory orders, public documents.
+- Earlier stand-in (no longer used): base 8.00 Rs/kWh, +1.00 06–10 h and 18–22 h, −1.00 22–06 h, export 3.00.
 
 ## Price scenario B — IEX DAM — PENDING
 - Needed: 15-min MCP for 2023 from `https://www.iexindia.com/market-data/day-ahead-market/market-snapshot`
   (Excel export). Parser: `qgrid.data.parse_iex_file` (tolerant to header rows / merged date cells).
 - STAND-IN currently used: synthetic hour-window price shape (config.yaml `prices.B.standin_profile_rs_kwh`).
 
-## CEA CO2 baseline — PENDING
-- Needed: latest "CO2 Baseline Database for the Indian Power Sector — User Guide" PDF from `https://cea.nic.in/`.
-- STAND-IN currently used: 0.727 tCO2/MWh — the v20.0 weighted average for FY2023-24 as quoted by
-  secondary sources (Climatiq `https://www.climatiq.io/data/source/government-of-india-_-central-electricity-authority`;
-  Saur Energy `https://www.saurenergy.com/solar-energy-news/ceas-co2-baseline-database-impact-of-re-on-indian-grid-emissions-intensity`).
-  A later version (v22.0) may revise it; to be verified against the PDF and recorded in
-  `data/raw/cea/emission_factor.yaml` with the page number.
+## CEA CO2 baseline — REAL
+- CEA "CO2 Baseline Database for the Indian Power Sector — User Guide", Version 20.0, December 2024,
+  `https://cea.nic.in/api/cdm-report-version/view-pdf/en/76` → `data/raw/cea/CEA_CO2_Baseline_User_Guide_v20.0_Dec2024.pdf`
+  (SHA-256 `b881c258f58fd77c8faeb36479ccd1ed8bd111c45e708196df8a66ff7b29afc6`), fetched 2026-11-27. Publisher: Central Electricity Authority, Ministry of Power, GoI.
+- Value used: **0.727 tCO2/MWh**, weighted average of the Indian Grid for FY 2023-24 (adjusted for cross-border
+  transfers, including RES & captive injection), Table S, PDF page 4 (printed "Page | 1"). Recorded in
+  `data/raw/cea/emission_factor.yaml`. It matches the earlier secondary-source stand-in.
+- Also downloaded for reference: v19.0 (Dec 2023; FY2022-23: 0.716 incl. RES, PDF p9) and v22.0 (Aug 2026, latest;
+  FY2025-26: 0.675, PDF p6). v22.0 says it replaced provisional 2022-23 and 2023-24 data; any revised FY2023-24
+  value in v22.0 has not been checked.
 
 ## Synthetic data
 Synthetic inputs appear only in unit tests (`backend/tests/`), labelled SYNTHETIC in the test code.

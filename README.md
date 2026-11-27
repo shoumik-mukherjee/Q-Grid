@@ -8,8 +8,10 @@ EUREKA Track 3 · Smart Decentralised Energy Systems
 > QIEA = quantum-inspired evolutionary algorithm on a classical CPU (not quantum computing).
 
 **Data status:** real NASA POWER irradiance, Ausgrid household shapes (hostels), OpenStreetMap layout (© OpenStreetMap
-contributors). **PENDING:** KERC/BESCOM tariff (PENDING), IEX prices (PENDING), CEA CO2 factor, RVCE calendar
-and meter data — labelled stand-ins, never headline results. See `data/SOURCES.md`, `docs/BLOCKERS.md`, `docs/data_request.md`.
+contributors), KERC Tariff Order 2023 (BESCOM HT-2(c)(ii) with ToD, Rs 350/kVA demand charge, 3.74 Rs/kWh export) and
+CEA CO2 factor v20.0 (0.727 tCO2/MWh, FY2023-24). **PENDING:** IEX prices, RVCE calendar and meter data — labelled
+stand-ins, never headline results. **The Rs figures below were computed with the earlier stand-in tariff and will change
+when results are regenerated with the KERC 2023 tariff.** See `data/SOURCES.md`, `docs/BLOCKERS.md`, `docs/data_request.md`.
 
 ## The problem (status quo, from results/*.csv)
 BESCOM outage during the fest evening: status quo **3.00 h** of critical-load downtime,
@@ -64,7 +66,7 @@ python scripts/new_campus.py --name "<campus>" --lat <lat> --lon <lon>   # anoth
 | Step | What | State |
 |---|---|---|
 | 0–5 | generic 5-building pipeline (first prototype), kept in docs/results_v1.md | ✅ |
-| 1 | pricing scenarios A (headline) / B (sensitivity), SOURCES with page numbers when REAL | ✅ code · data PENDING |
+| 1 | pricing scenarios A (headline) / B (sensitivity), SOURCES with page numbers when REAL | ✅ code · A: KERC 2023 REAL (season-dependent ToD), CEA v20.0 REAL · B (IEX) PENDING · results not yet regenerated |
 | 2 | RVCE campus from OSM, timetable/Ausgrid loads, DG, tanks, outage islanding, 6 scenarios | ✅ (calendar/loads PENDING) |
 | 3 | QAOA only on scenarios, warm start, QUBO cache, ADMM convergence stats & fallbacks | ✅ |
 | 4 | QAOA → QIEA → SA → exact tiers, C-QIEA, baselines B0–B5, benchmark both price scenarios | ✅ |
@@ -73,11 +75,11 @@ python scripts/new_campus.py --name "<campus>" --lat <lat> --lon <lon>   # anoth
 | 7 | 3D demo: light step-by-step explainer (7 steps, one continuous 3D thread: campus → decisions → qubits → QAOA circuit → measurement → decoded plan → ADMM → storage → results), Verify and Try it tabs, honesty strip | ✅ |
 | 8 | new_campus.py, manifest + make verify, CI | ✅ |
 | 9 | report, why-quantum, viva Q&A, pitch, data request | ✅ |
-| 10 | design study: 24 h rolling horizon, LP coordination between neighbours, hybrid-Benders and quantum-master variants measured; ablation of four design changes (docs/ablation.md); quantum placement test; multi-dataset benchmark (docs/benchmark_v3.md, docs/scorecard.md) | ✅ code · tariff PENDING · hardware runs need tokens |
+| 10 | design study: 24 h rolling horizon, LP coordination between neighbours, hybrid-Benders and quantum-master variants measured; ablation of four design changes (docs/ablation.md); quantum placement test; multi-dataset benchmark (docs/benchmark_v3.md, docs/scorecard.md) | ✅ code · tariff REAL (results not yet regenerated) · hardware runs need tokens |
 | 11 | explainer: light / dark / system theme (one token file, `D`), presenter mode (`P`, step timer, projector sizing), one-page summary (print → PDF), friendly missing-file states, lazy 3D / KaTeX chunks, WCAG AA contrast test for both themes (`npm run test:contrast`), checked at 1280×720 / 1440×900 / 1920×1080 | ✅ (branch ui-dark-mode) |
 
 ## Honest limits
-PENDING prices/CO2/calendar/meter data; loads are area-based estimates; perfect forecasts; QAOA simulated (ideal, noiseless);
+PENDING IEX prices/calendar/meter data; RVCE's tariff category and ≥ 500 kVA ToD applicability are ASSUMPTIONS pending its bill; loads are area-based estimates; perfect forecasts; QAOA simulated (ideal, noiseless);
 ADMM with binaries has no convergence guarantee (full agreement in 48.7 % of slots, rest settled safely);
 lossless tie-lines without AC power flow. Docs: [report](docs/report.md) · [why quantum](docs/why_quantum.md) ·
 [viva Q&A](docs/viva_qa.md) · [pitch](docs/pitch.md) · [QUBO derivation](docs/qubo.md).

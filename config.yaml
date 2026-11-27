@@ -163,18 +163,40 @@ impact:                       # "Is it worth it?" (scripts/write_impact.py). Eve
 # ----------------------------------------------------------------------------- prices
 prices:
   scenarios: [A, B]
+  # REAL: KERC Tariff Order 2023, BESCOM (dated 12.05.2023, effective 01.04.2023), category HT-2(c)(ii);
+  # KERC solar generic tariff order dated 01.06.2023 (FY24). PDFs in data/raw/tariff/, see data/SOURCES.md.
+  # Page refs "pN (printed M)": N = page of data/raw/tariff/KERC_tariff_order_BESCOM_FY2023-24.pdf (merged), M = page
+  # number printed on the order. Validity: TO2023 and the FY24 solar order apply from 01.04.2023; days before that
+  # date fell under KERC Tariff Order 2022 (not yet obtained) and are priced here with the 2023 rates.
   A:
-    status: PENDING
+    status: REAL
     role: headline
-    source: "KERC tariff order: BESCOM HT educational institutions (ToD) import; KERC solar net-metering/feed-in rate export"
-    standin_note: "STAND-IN placeholder rates, NOT taken from a KERC/BESCOM document"
-    import_base_rs_kwh: 8.00
-    tod:
-      - {start: "06:00", end: "10:00", adder: 1.00}
-      - {start: "18:00", end: "22:00", adder: 1.00}
-      - {start: "22:00", end: "06:00", adder: -1.00}
-    export_rs_kwh: 3.00
-    pages: {}                 # fill with page numbers of the KERC PDFs when REAL
+    source: "KERC Tariff Order 2023 (BESCOM) HT-2(c)(ii) energy charge + HT ToD; KERC solar tariff order 01.06.2023 (FY24) SRTPV 1-2000 kW export"
+    standin_note: "(not used: status REAL; the earlier stand-in was 8.00 Rs/kWh, +1.00 06-10 h & 18-22 h, -1.00 22-06 h, export 3.00)"
+    import_base_rs_kwh: 8.50  # HT-2(c)(ii) "850 paise" per kWh "For entire consumption": p215 (printed 206); rate schedule p382 (printed 373)
+    tod:                      # HT-2(a)/(b)/(c)(i)/(c)(ii) ToD approved by the Commission: p215 (printed 206); Annexure V note 11 p378 (printed 369)
+      # Dec-Jun only; Jul-Nov (monsoon period) every slot 0. No morning peak: 06-10 h is 0 in both seasons
+      # (BESCOM's proposed 06-10 h peak was not approved: "continue with the existing approved ToD Tariff", p170-172 (printed 161-163)).
+      - {start: "18:00", end: "22:00", adder: 1.00, months: [12, 1, 2, 3, 4, 5, 6]}    # (+)100 paise
+      - {start: "22:00", end: "06:00", adder: -1.00, months: [12, 1, 2, 3, 4, 5, 6]}   # (-)100 paise
+    tod_applicability: >-
+      ASSUMPTION pending RVCE's BESCOM bill: ToD is mandatory for HT-2(c) with contract demand >= 500 kVA and optional
+      below (p208, printed 199); RVCE is assumed to be >= 500 kVA, so ToD is applied.
+    category_note: >-
+      ASSUMPTION pending RVCE's bill: RVCE (private, assumed unaided, not itself a university) billed under
+      HT-2(c)(ii) "other than those covered under HT-2(c)(i)" (p213, p382); hostels of all educational institutions
+      are HT-2(c)(i) (Rs 300/kVA, 750 paise, p215, p382) and are not modelled separately.
+    export_rs_kwh: 3.74       # SRTPV 1 kW-2000 kW (excl. 1-10 kW domestic) "Rs.3.74 per unit", new PPAs on/after 01.04.2023, 25 yr: solar order p30
+    pages:
+      tariff_order_pdf: data/raw/tariff/KERC_tariff_order_BESCOM_FY2023-24.pdf
+      category_definition: "p213 (printed 204); Annexure V tariff schedule p382 (printed 373)"
+      energy_charge: "p215 (printed 206); p382 (printed 373)"
+      tod: "p215 (printed 206); p378 (printed 369)"
+      tod_mandatory_500kva: "p208 (printed 199)"
+      tod_morning_peak_rejected: "p170-172 (printed 161-163)"
+      effective_date: "data/raw/tariff/KERC_TO2023_press_note_all_ESCOMs.pdf p2"
+      export_pdf: data/raw/tariff/KERC_solar_export_tariff.pdf
+      export_rate: "p30"
   B:
     status: PENDING
     role: sensitivity
@@ -190,11 +212,12 @@ prices:
       - {start: "23:00", end: "24:00", price: 6.00}
 
 co2:
-  status: PENDING
+  status: REAL                # the value used comes from data/raw/cea/emission_factor.yaml (CEA v20.0 PDF, p4);
+                              # the stand-in below is only used if that file or the PDF is missing
   standin_tco2_per_mwh: 0.727
   standin_note: >-
     CEA CO2 Baseline Database v20.0 weighted average (FY2023-24) as quoted by secondary sources
-    (Climatiq; Saur Energy); not yet verified against the CEA PDF.
+    (Climatiq; Saur Energy); used only if data/raw/cea/emission_factor.yaml is missing.
   lambda_rs_per_kg: 0.0
 
 # ----------------------------------------------------------------------------- calendar & scenarios
@@ -238,13 +261,15 @@ rules_dir: rules
 
 # ----------------------------------------------------------------------------- optimiser v2
 tariff_v2:                    # demand charge on the campus peak (one HT connection; kVA = kW / pf)
-  status: PENDING
-  source: "BESCOM HT educational institutions: demand charge Rs/kVA/month on recorded maximum demand (KERC tariff order)"
-  standin_note: "STAND-IN placeholder demand charge, NOT taken from a BESCOM/KERC document"
-  demand_rs_per_kva_month: 350.0
+  status: REAL
+  source: "KERC Tariff Order 2023 (BESCOM) HT-2(c)(ii): Fixed Charges / month / KVA of Billing Demand"
+  standin_note: "(not used: status REAL)"
+  demand_rs_per_kva_month: 350.0   # HT-2(c)(ii) "Per KVA Rs.350/-": p215 (printed 206); rate schedule p382 (printed 373)
   power_factor: 0.95          # ASSUMPTION
   days_per_month: 30          # ASSUMPTION: daily figures carry 1/30 of the monthly charge on the day's peak kVA
-  pages: {}
+  pages:
+    tariff_order_pdf: data/raw/tariff/KERC_tariff_order_BESCOM_FY2023-24.pdf
+    demand_charge: "p215 (printed 206); p382 (printed 373)"
 
 v2:
   horizon_slots: 96           # 24 h rolling horizon, re-planned every slot (MPC)

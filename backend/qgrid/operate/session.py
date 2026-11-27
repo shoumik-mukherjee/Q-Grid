@@ -148,7 +148,9 @@ class Session:
             self.cloud = None
             self.data_label = {"solar": f"Historical day {self.profile:%d %b %Y}: actual solar from NASA POWER (real); the plan uses the solar forecast",
                                "loads": "BDG2-derived campus profile for that day — no RVCE meters yet"}
-        self.data_label["tariff"] = f"Price scenario A: {self.campus.cfg['tariff_v2']['status']} stand-in"
+        tv = self.campus.cfg["tariff_v2"]["status"]
+        self.data_label["tariff"] = ("Price scenario A: KERC Tariff Order 2023, BESCOM HT-2(c)(ii) with ToD (REAL)" if tv == "REAL"
+                                     else f"Price scenario A: {tv} stand-in")
         self.data_label["wear"] = f"Battery wear priced at Rs {wear_rate(self.campus.cfg):.2f}/kWh (assumption)"
         # per-slot actual log of the operated day
         z = lambda: np.zeros((self.n, T))   # noqa: E731

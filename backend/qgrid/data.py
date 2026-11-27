@@ -331,6 +331,19 @@ def _window_mask(idx: pd.DatetimeIndex, start: str, end: str) -> np.ndarray:
     return (mins >= a) & (mins < b) if a < b else (mins >= a) | (mins < b)
 
 
+def tod_adder(idx: pd.DatetimeIndex, windows: list[dict]) -> np.ndarray:
+    """Sum of ToD adders (Rs/kWh) per slot. Each window is {start, end, adder[, months]}: [start, end) by time
+    of day (wraps midnight), applied only in the listed calendar months (1-12) of the slot if `months` is given,
+    otherwise all year. Season-dependent ToD (e.g. KERC 2023 HT: Dec-Jun only) is one window per season."""
+    out = np.zeros(len(idx))
+    for w in windows:
+        m = _window_mask(idx, w["start"], w["end"])
+        if w.get("months") is not None:
+            m = m & np.isin(idx.month, [int(x) for x in w["months"]])
+        out += float(w["adder"]) * m
+    return out
+
+
 def iex_series(year: int) -> pd.Series | None:
     """Real IEX DAM MCP (Rs/kWh) if data/raw/iex covers the year (<=3 days gap-filled), else None."""
     d = RAW / "iex"
@@ -353,9 +366,7 @@ def build_prices(cfg: dict) -> tuple[pd.DataFrame, dict]:
     status = {}
 
     a = pc["A"]
-    imp = np.full(len(idx), float(a["import_base_rs_kwh"]))
-    for w in a["tod"]:
-        imp += w["adder"] * _window_mask(idx, w["start"], w["end"])
+    imp = float(a["import_base_rs_kwh"]) + tod_adder(idx, a["tod"])
     out = pd.DataFrame({"A_import": imp, "A_export": float(a["export_rs_kwh"])}, index=idx)
     status["A"] = {"status": a["status"], "source": a["source"],
                    "note": a["standin_note"] if a["status"] != "REAL" else ""}
