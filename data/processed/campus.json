@@ -2130,7 +2130,7 @@
  "pv": {
   "scenario": "existing",
   "existing_kwp": 500.0,
-  "status": "SOURCED, VERIFICATION PENDING (PDF not yet in data/raw/rvce/)",
+  "status": "SOURCED (RVCE grid-connection document; corroborated by NAAC Cr 7.1.2 and Shiksha)",
   "total_kwp": 500.0
  },
  "area_targets": {

@@ -206,12 +206,18 @@ Source: RVCE NAAC SSR 2024, `data/raw/rvce/Final-submitted-SSR_28-June-2024_late
   (INTERPRETATION, ASSUMPTION: the p12 figure excludes the boys' hostels; including them would leave the other buildings
   29,062 m², below their mapped roof area). Zones scaled down keep their OSM roofs; the hostel roof grows by the same factor
   as its floor area (unmapped hostel blocks, ASSUMPTION). Total 106,440 m² (was 156,588 m² from OSM × assumed levels).
-- **Existing rooftop PV: 500 kWp, SOURCED, VERIFICATION PENDING.** RVCE "21. Electrical Grid Power Supply Connection"
-  (`https://rvce.edu.in/sites/default/files/21.%20Electrical%20Grid%20Power%20Supply%20Connection.pdf`): 1,564 modules ×
-  320 Wp on 21 rooftops = 500.48 kWp; inverters 6 × 50 + 6 × 30 + 1 × 20 kW = 500 kW, as reported by the team. The PDF and the
-  NAAC building list (`https://naac.rvce.edu.in/sites/default/files/2024-05/Cr_7.1.2_File_4_Solar_Power_Facility_in_various_departments_Geotagged_Photos.pdf`)
-  refused scripted downloads on 2026-11-27 and are not yet in `data/raw/rvce/`; split across zones by roof area
-  (ASSUMPTION) until the building list is available. The earlier roof-potential PV (≈ 4,000 kWp: 45 % of roof × 0.18 kWp/m²)
+- **Existing rooftop PV: 500 kWp, SOURCED.**
+  - Primary: RVCE, "21. Electrical Grid Power Supply Connection",
+    `https://rvce.edu.in/sites/default/files/21.%20Electrical%20Grid%20Power%20Supply%20Connection.pdf` — 1,564 modules ×
+    320 Wp on 21 rooftops = 500.48 kWp; inverters 6 × 50 + 6 × 30 + 1 × 20 kW = 500 kW. Read by the team via search on
+    2026-11-27; the page has since been removed in RVCE's site redesign, so there is no local copy (scripted downloads
+    returned HTTP 404 the same day).
+  - Corroboration: RVCE NAAC file Cr 7.1.2, "Solar Power Facility in various departments — Geotagged Photos"
+    (`https://naac.rvce.edu.in/sites/default/files/2024-05/Cr_7.1.2_File_4_Solar_Power_Facility_in_various_departments_Geotagged_Photos.pdf`):
+    solar panels on department rooftops, approx. 525 kW. Indexed by search on 2026-11-27; naac.rvce.edu.in refused scripted
+    connections that day, so it is not yet in `data/raw/rvce/`.
+  - Corroboration: Shiksha.com's RVCE profile, "500 KWP solar power setup" (as reported by the team).
+  - Split across zones by roof area (ASSUMPTION) until the NAAC building list is saved and read. The earlier roof-potential PV (≈ 4,000 kWp: 45 % of roof × 0.18 kWp/m²)
   is kept only as the PROPOSED scenario (`campus.pv.scenario: proposed`), never the baseline.
 - **Diesel:** SSR p69 "UPS along with two generators of capacity 980 KVA are available. It is planned to add three more
   generators with capacity 750 KVA each". Read as 980 kVA in total for the two existing sets (INTERPRETATION), 490 kVA each ×

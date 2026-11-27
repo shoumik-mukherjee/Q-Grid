@@ -16,13 +16,15 @@ campus:
   # Component status: EXISTING = documented at RVCE (source given); PROPOSED = part of the Q-Grid design, not on campus
   # today (battery banks, inter-building tie-line cables, EV-charging load, extra PV); ASSUMPTION = engineering guess.
   pv:
-    # EXISTING rooftop PV, SOURCED (VERIFICATION PENDING): RVCE "21. Electrical Grid Power Supply Connection"
-    # (https://rvce.edu.in/sites/default/files/21.%20Electrical%20Grid%20Power%20Supply%20Connection.pdf): 1,564 modules
-    # x 320 Wp on 21 rooftops = 500.48 kWp; inverters 6 x 50 + 6 x 30 + 1 x 20 kW = 500 kW. Figures as reported by the
-    # team; rvce.edu.in refuses scripted downloads, so the PDF is not yet in data/raw/rvce/ and has not been read here.
-    status: "SOURCED, VERIFICATION PENDING (PDF not yet in data/raw/rvce/)"
+    # EXISTING rooftop PV, SOURCED: RVCE "21. Electrical Grid Power Supply Connection"
+    # (https://rvce.edu.in/sites/default/files/21.%20Electrical%20Grid%20Power%20Supply%20Connection.pdf; read by the team
+    # via search on 2026-11-27, since removed in RVCE's site redesign, no local copy): 1,564 modules x 320 Wp on 21
+    # rooftops = 500.48 kWp; inverters 6 x 50 + 6 x 30 + 1 x 20 kW = 500 kW. Corroborated by RVCE's NAAC file Cr 7.1.2
+    # "Solar Power Facility in various departments" (approx. 525 kW; https://naac.rvce.edu.in/sites/default/files/2024-05/Cr_7.1.2_File_4_Solar_Power_Facility_in_various_departments_Geotagged_Photos.pdf)
+    # and Shiksha.com's RVCE profile ("500 KWP solar power setup"). See data/SOURCES.md.
+    status: "SOURCED (RVCE grid-connection document; corroborated by NAAC Cr 7.1.2 and Shiksha)"
     existing_kwp: 500.0
-    existing_zone_kwp: {}     # per-zone kWp from the building list (NAAC 7.1.2 geotagged photos PDF, PENDING); zones not
+    existing_zone_kwp: {}     # per-zone kWp from the building list (NAAC Cr 7.1.2 PDF, not yet downloaded); zones not
                               # listed share the rest by roof area = footprint x pv_roof (ASSUMPTION)
     scenario: existing        # existing = baseline (500 kWp). proposed = PROPOSED scenario: each zone max(existing share,
                               # roof potential below); never the baseline

@@ -203,7 +203,7 @@
     "calendar": "PENDING",
     "campus_loads": "PENDING RVCE DATA",
     "floor_areas": "SOURCED (RVCE NAAC SSR 2024, scaled)",
-    "pv_existing": "500 kWp SOURCED, VERIFICATION PENDING (PDF not yet in data/raw/rvce/)",
+    "pv_existing": "500 kWp SOURCED (RVCE grid-connection document; corroborated by NAAC Cr 7.1.2 and Shiksha)",
     "batteries_tielines_ev": "PROPOSED (Q-Grid design, not on campus today)",
     "lab_schedule": "TEMPLATE"
   }
